@@ -23,8 +23,8 @@ const schema = z.object({
            .describe("Unix timestamp — only fetch bottles newer than this"),
   until: z.number().int().positive().optional()
            .describe("Unix timestamp — only fetch bottles older than this"),
-  limit: z.number().int().min(1).max(20).default(5)
-           .describe("Number of bottles to return (1–20, default 5)"),
+  limit: z.number().int().min(1).max(20).default(1)
+           .describe("Number of bottles to return (1–20, default 1)"),
 });
 
 export function registerFetchBottle(server: McpServer) {

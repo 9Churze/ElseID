@@ -7,7 +7,7 @@ import path from "path";
 import os from "os";
 import fs from "fs";
 
-const DATA_DIR = path.join(os.homedir(), ".bicean");
+const DATA_DIR = path.join(process.cwd(), ".bicean_data");
 const DB_PATH  = path.join(DATA_DIR, "bicean.db");
 
 let _db: Database.Database | null = null;

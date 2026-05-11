@@ -5,7 +5,7 @@
 // ============================================================
 
 import { generateSecretKey, getPublicKey } from "nostr-tools";
-import { bytesToHex, hexToBytes }           from "@noble/hashes/utils";
+import { bytesToHex, hexToBytes }           from "@noble/hashes/utils.js";
 import { getDb }                            from "../storage/db.js";
 import type { Identity, AnonymityLevel }   from "../../types/index.js";
 

@@ -5,7 +5,7 @@
 // ============================================================
 
 import { finalizeEvent, verifyEvent } from "nostr-tools";
-import { hexToBytes }                  from "@noble/hashes/utils";
+import { hexToBytes }                  from "@noble/hashes/utils.js";
 import type { UnsignedEvent, NostrEvent } from "../../types/index.js";
 
 /**

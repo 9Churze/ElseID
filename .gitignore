@@ -10,6 +10,6 @@ coverage/
 .vscode/
 .idea/
 # Bicean Local
- .bicean_data/
- scripts/
- docs/*_report.md
+.bicean_data/
+scripts/
+docs/*_report.md

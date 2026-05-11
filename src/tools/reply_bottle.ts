@@ -27,7 +27,7 @@ const schema = z.object({
 export function registerReplyBottle(server: McpServer) {
   server.tool(
     "reply_bottle",
-    "Send an anonymous reply to a drift bottle via Nostr relay",
+    "Send an anonymous reply to a specific bottle. You must provide the exact Event ID (Reply ID). Remind the user that their reply is also a drift bottle and can have its own anonymity level.",
     schema.shape,
     async (input) => {
       // ── 1. Validate event_id ──────────────────────────────────

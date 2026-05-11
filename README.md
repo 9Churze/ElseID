@@ -1,138 +1,64 @@
-# Bicean 🌊
+# Bicean 🌊 | 二进制海
 
-> 基于 Nostr Relay 网络的去中心化 AI 漂流瓶系统  
-> Decentralized AI drift bottle system over the Nostr relay network.
-
-[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Compliance](https://img.shields.io/badge/Compliance-Required-orange.svg)](./COMPLIANCE.md)
+> **“在平行的数字空间，投掷你的心跳。”**  
+> 这是一个基于 Nostr 去中心化协议的 AI 漂流瓶系统。无需注册，无需服务器，数据归你。
 
 ---
 
-## 简介
+## ⚡️ 快速开始 (AI 辅助安装)
 
-Bicean 是一个基于 Nostr Relay 网络的去中心化 AI 漂流瓶系统。用户通过 MCP 工具向全球发送匿名漂流瓶，并随机捞取来自世界各地的漂流内容。
+本系统作为一个 **MCP (Model Context Protocol)** 插件运行。你可以让你的 AI 助手（如 Claude）辅助你安装：
 
-系统无中心化业务服务器，仅依赖开放 Relay 网络传播消息。
-
----
-
-## ⚠️ 重要声明 / Important Notice
-
-**本项目以 AGPL-3.0 协议开源。**
-
-> 本系统内置 AI 内容审核模块，用于拦截违法、有害内容。  
-> **任何 fork、修改或衍生版本必须保留内容审核机制，并自行承担因修改审核逻辑而产生的一切法律责任。**  
-> 本项目原作者对第三方修改版本的内容及其法律后果不承担任何责任。
-
-**This project is licensed under AGPL-3.0.**
-
-> This system includes a built-in AI content moderation module to filter illegal and harmful content.  
-> **Any fork, modification, or derivative work must retain the content moderation mechanism. All legal liability arising from modifications to the moderation logic rests solely with the modifier.**  
-> The original authors bear no responsibility for the content or legal consequences of third-party modified versions.
-
-📄 详见 / See full policy: [COMPLIANCE.md](./COMPLIANCE.md)
+1. **第一步**：克隆或下载本项目到本地。
+2. **第二步**：将以下指令发送给你的 AI 助手：
+   > “我下载了 Bicean 漂流瓶项目，我想在当前的 Claude 客户端中使用它。请指导我运行 `npm run setup` 来完成安装，并告诉我安装成功后该如何称呼你。”
+3. **第三步**：根据 AI 的提示，在终端执行：
+   ```bash
+   npm install
+   npm run setup
+   ```
+4. **第四步**：完全重启你的 AI 客户端（如 Claude Desktop）。
 
 ---
 
-## 快速开始
+## 🎭 调频员指令集 (System Prompt)
 
-```bash
-npm install
-npm run dev
-```
+为了获得最佳体验，请在 AI 客户端的“系统设置”或“自定义指令”中粘贴以下内容：
 
-### 环境变量
-
-```bash
-# 必填：用于 AI 内容审核和情绪识别
-ANTHROPIC_API_KEY=your_api_key_here
-```
+> **“你现在是 Bicean 信号调频员。你的任务是协助我在‘二进制海’中投掷和扫描信号。在投掷前，请务必询问我希望使用的匿名等级（阅后即焚 / 会话级 / 长期身份）。打捞到信号后，请用你冷峻而温柔的口吻为我解读。”**
 
 ---
 
-## MCP Tools
+## 🛠 功能概览
 
-| Tool | 说明 |
+| 指令 (MCP Tools) | 描述 |
 |------|------|
-| `send_bottle` | 发送漂流瓶到 Nostr Relay |
-| `fetch_bottle` | 随机捞取漂流瓶 |
-| `reply_bottle` | 匿名回复漂流瓶 |
-| `delete_bottle` | 召回你发送的漂流瓶（NIP-09）|
-| `list_relays` | 列出所有 Relay 状态 |
-| `check_relay_status` | 检测指定 Relay |
-| `pick_relay` | 系统自动选择最优 Relay |
-| `refresh_relays` | 刷新所有 Relay 健康状态 |
+| `send_bottle` | 向全球广播你的匿名漂流瓶 |
+| `fetch_bottle` | 从海洋中随机捕获他人的信号 |
+| `reply_bottle` | 对感兴趣的信号进行匿名回应 |
+| `list_relays` | 查看当前连接的全球中继站状态 |
 
 ---
 
-## 协议
+## 🔐 隐私与匿名
 
-- Event kind: `7777`
-- 单播策略：每个漂流瓶只广播至一个 Relay
-- 位置信息：城市级别，精度截断至 1 位小数
-- 身份：基于 secp256k1 公私钥，无需注册
-- 删除：NIP-09 kind:5 召回请求
+Bicean 提供三个维度的匿名保护：
+- **Full (阅后即焚)**：发射后立即销毁本地钥匙，不可追溯，不可收信。
+- **Ephemeral (会话级)**：仅在本次 AI 对话中保持身份，关闭即失联。
+- **Persistent (长期身份)**：在本地建立固定坐标，可以跨天接收回复。
 
----
-
-## 内容审核
-
-发送前系统自动执行 AI 审核，拦截：
-
-- 广告 / 垃圾信息
-- 色情 / 暴力内容
-- 骚扰 / 仇恨言论
-- 联系方式 / 恶意链接
-- 欺诈 / 诈骗内容
-
-审核模块位于 `src/ai/moderator.ts`。
-
-> 修改审核逻辑的开发者须自行承担相应法律责任，详见 [COMPLIANCE.md](./COMPLIANCE.md)。
+> 📍 **地理保护**：你的坐标会被自动模糊化至城市级别，且精度仅保留到小数点后一位，外界永远无法定位到你的具体街道。
 
 ---
 
-## 匿名等级
+## 📝 开发者说明
 
-| 等级 | 说明 | 密钥存储 |
-|------|------|----------|
-| `full` | 每次发送生成新密钥 | ❌ 不保存 |
-| `ephemeral` | 会话内复用同一密钥 | ✅ 会话级 |
-| `persistent` | 跨会话固定身份 | ✅ 长期保存 |
-
-> 注意：`full` 模式发送的漂流瓶无法通过 NIP-09 从 Relay 召回（密钥一次性不保存），但可从本地隐藏。
-
----
-
-## 目录结构
-
-```
-bicean/
-├── src/
-│   ├── tools/          # MCP Tool 定义
-│   ├── nostr/          # Nostr 协议层
-│   ├── ai/             # AI 审核 & 情绪识别
-│   ├── crypto/         # 密钥管理 & 加密
-│   ├── relay/          # Relay 健康检测 & 广播
-│   ├── storage/        # 本地 SQLite 存储
-│   └── location/       # 地理位置模糊化
-├── config/             # Relay 列表配置
-├── types/              # TypeScript 类型定义
-├── tests/              # 单元测试
-└── docs/               # 协议文档 & 架构说明
-```
-
----
-
-## 文档
-
-- [架构设计](docs/architecture.md)
-- [Event Schema](docs/event_schema.md)
-- [合规政策](COMPLIANCE.md)
+如果你想深入研究协议，请参考：
+- [架构设计 (docs/architecture.md)](./docs/architecture.md)
+- [运行测试报告 (docs/run_test_report.md)](./docs/run_test_report.md)
 
 ---
 
 ## License
-
-[AGPL-3.0](./LICENSE) © Bicean Contributors
-
-依据 AGPL-3.0，任何在网络上提供本软件服务的衍生版本，**必须**以相同协议开源其完整源代码。
+[AGPL-3.0](./LICENSE) © Bicean Contributors.  
+*注意：本系统内置 AI 审核模块，任何修改版必须保留审核机制。*

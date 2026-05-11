@@ -30,7 +30,7 @@ const schema = z.object({
 export function registerFetchBottle(server: McpServer) {
   server.tool(
     "fetch_bottle",
-    "Pick up random drift bottles from the Nostr relay network",
+    "Scan the 'Binary Ocean' for random drift bottles. When displaying found bottles, summarize their mood and content to the user, and explicitly mention they can use 'reply_bottle' to respond anonymously.",
     schema.shape,
     async (input) => {
       // ── 1. Build filter ───────────────────────────────────────

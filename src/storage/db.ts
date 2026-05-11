@@ -7,8 +7,13 @@ import path from "path";
 import os from "os";
 import fs from "fs";
 
-const DATA_DIR = path.join(process.cwd(), ".bicean_data");
+const DATA_DIR = path.join(os.homedir(), ".bicean");
 const DB_PATH  = path.join(DATA_DIR, "bicean.db");
+
+// 确保数据目录存在 (跨端共享的基础)
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
 
 let _db: Database.Database | null = null;
 

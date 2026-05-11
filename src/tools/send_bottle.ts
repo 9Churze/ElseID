@@ -35,7 +35,7 @@ const schema = z.object({
 export function registerSendBottle(server: McpServer) {
   server.tool(
     "send_bottle",
-    "Send an anonymous drift bottle over the Nostr relay network",
+    "Send an anonymous drift bottle to the Nostr network. IMPORTANT: Before calling this tool, you MUST explain the 3 anonymity levels (Full/Ephemeral/Persistent) to the user and ask for their preference. Full means they cannot receive replies, while Ephemeral/Persistent allows it.",
     schema.shape,
     async (input) => {
       // ── 1. Moderation ────────────────────────────────────────

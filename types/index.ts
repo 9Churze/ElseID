@@ -69,6 +69,8 @@ export interface Bottle {
   relay: string;
   location: FuzzyLocation;
   ephemeral: boolean;
+  pubkey: string;
+  isSent: boolean;
 }
 
 // ── Location ─────────────────────────────────────────────────

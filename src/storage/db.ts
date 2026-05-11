@@ -7,12 +7,19 @@ import path from "path";
 import os from "os";
 import fs from "fs";
 
-const DATA_DIR = path.join(os.homedir(), ".bicean");
+const DATA_DIR = process.env.BICEAN_DATA_DIR || path.join(os.homedir(), ".bicean");
 const DB_PATH  = path.join(DATA_DIR, "bicean.db");
 
-// 确保数据目录存在 (跨端共享的基础)
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
+// 确保数据目录存在
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+} catch (err) {
+  console.warn(`⚠️ 无法创建数据目录 ${DATA_DIR}, 将尝试使用当前目录下的 .bicean_temp`);
+  const fallbackDir = path.join(process.cwd(), ".bicean_temp");
+  if (!fs.existsSync(fallbackDir)) fs.mkdirSync(fallbackDir);
+  // 这里不更新常量，但给开发者一个明确的信号
 }
 
 let _db: Database.Database | null = null;
@@ -45,7 +52,9 @@ export async function initDb(): Promise<void> {
       lat         TEXT,
       lon         TEXT,
       ephemeral   INTEGER DEFAULT 0,
-      read_at     INTEGER
+      read_at     INTEGER,
+      pubkey      TEXT,              -- Original author pubkey
+      is_sent     INTEGER DEFAULT 0  -- 1 if sent by us, 0 if received
     );
 
     CREATE TABLE IF NOT EXISTS identities (

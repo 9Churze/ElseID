@@ -1,15 +1,31 @@
+# Dependency directories
 node_modules/
 dist/
 build/
+
+# Logs & Temp files
 *.log
-.env
-.env.local
 .DS_Store
 *.tgz
 coverage/
+.bicean_test/
+.bicean_temp/
+
+# Configuration & Secrets
+.env
+.env.local
+
+# Database files (Local storage)
+*.db
+*.db-journal
+*.db-wal
+
+# IDE / Editor
 .vscode/
 .idea/
-# Bicean Local
+
+# Bicean Specific
 .bicean_data/
-scripts/
+
+# Generated reports
 docs/*_report.md

@@ -4,7 +4,7 @@
 // Uses AES-256-CBC with ECDH shared secret (secp256k1).
 // ============================================================
 
-import { getSharedSecret } from "@noble/secp256k1";
+import { getSharedSecret, getPublicKey } from "@noble/secp256k1";
 import { bytesToHex, hexToBytes, randomBytes } from "@noble/hashes/utils";
 import { sha256 }     from "@noble/hashes/sha256";
 import { createCipheriv, createDecipheriv } from "crypto";
@@ -39,10 +39,6 @@ export interface EncryptedPayload {
 
 /**
  * Encrypt plaintext with the sender's privkey and recipient's pubkey.
- * For burn-after-read bottles the "recipient" is a short-lived ephemeral key.
- *
- * Returns an object matching NIP-04 format: `ciphertext?iv=<base64_iv>`
- * as a flat string, which goes into the Nostr event's content field.
  */
 export function encryptContent(
   plaintext:    string,
@@ -61,13 +57,11 @@ export function encryptContent(
   const ct = encrypted.toString("base64");
   const ivB64 = Buffer.from(iv).toString("base64");
 
-  // NIP-04 wire format
   return `${ct}?iv=${ivB64}`;
 }
 
 /**
  * Decrypt a NIP-04 ciphertext string.
- * Returns the original plaintext, or throws on bad key / expired payload.
  */
 export function decryptContent(
   ciphertextWithIv: string,
@@ -96,24 +90,12 @@ export function decryptContent(
 
 /**
  * Generate a one-time recipient keypair for a burn-after-read bottle.
- * The privkey is stored locally with a TTL; once expired, decryption
- * is permanently impossible even locally.
  */
 export function generateEphemeralRecipient(): { pubkey: string; privkey: string } {
   const privBytes = randomBytes(32);
   const privkey   = bytesToHex(privBytes);
-
-  // Import dynamically to avoid circular dep with keypair.ts
-  const { getPublicKey } = await import("nostr-tools").catch(() => {
-    throw new Error("nostr-tools not available");
-  });
-
-  // Synchronous fallback using @noble/secp256k1 directly
-  const { ProjectivePoint } = require("@noble/secp256k1");
-  const pubkeyBytes = ProjectivePoint.BASE.multiply(
-    BigInt("0x" + privkey)
-  ).toRawBytes(true); // compressed
-  const pubkey = bytesToHex(pubkeyBytes.slice(1)); // x-only
+  const pubkeyFull = getPublicKey(privkey, true); // compressed
+  const pubkey    = bytesToHex(pubkeyFull.slice(1)); // x-only
 
   return { pubkey, privkey };
 }

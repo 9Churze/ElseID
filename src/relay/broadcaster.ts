@@ -75,7 +75,7 @@ function sendOnce(event: NostrEvent, relayUrl: string): Promise<BroadcastResult>
       ws.send(JSON.stringify(["EVENT", event]));
     });
 
-    ws.on("message", (raw) => {
+    ws.on("message", (raw: WebSocket.RawData) => {
       try {
         const msg = JSON.parse(raw.toString()) as unknown[];
         const [type, subscriptionIdOrEventId, ...rest] = msg;
@@ -97,7 +97,7 @@ function sendOnce(event: NostrEvent, relayUrl: string): Promise<BroadcastResult>
       }
     });
 
-    ws.once("error", (err) => {
+    ws.once("error", (err: Error) => {
       reject(err);
     });
 

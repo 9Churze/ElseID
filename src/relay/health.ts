@@ -50,7 +50,7 @@ export async function checkRelay(url: string): Promise<RelayInfo> {
       }, 1_000);
     });
 
-    ws.once("error", () => {
+    ws.once("error", (err: Error) => {
       if (!settled) {
         settled = true;
         clearTimeout(timeout);

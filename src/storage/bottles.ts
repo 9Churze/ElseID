@@ -1,7 +1,6 @@
 // ============================================================
 // Bicean — src/storage/bottles.ts
-// Local SQLite CRUD for drift bottles. Handles TTL expiry
-// and read-state tracking for ephemeral (burn-after-read) mode.
+// Local SQLite CRUD for drift bottles.
 // ============================================================
 
 import { getDb }                 from "./db.js";
@@ -12,7 +11,6 @@ import type { Bottle, NostrEvent, Mood, SupportedLang, TTLOption, FuzzyLocation 
 
 /**
  * Persist a fetched/sent drift bottle to the local DB.
- * Safe to call multiple times for the same event_id (INSERT OR IGNORE).
  */
 export function saveBottle(event: NostrEvent, relay: string): void {
   const tags       = event.tags;
@@ -25,9 +23,9 @@ export function saveBottle(event: NostrEvent, relay: string): void {
     INSERT OR IGNORE INTO bottles
       (event_id, content, mood, tone, lang, tags, ttl,
        created_at, expires_at, relay,
-       country, city, lat, lon, ephemeral)
+       country, city, lat, lon, ephemeral, pubkey, is_sent)
     VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     event.id,
     event.content,
@@ -43,8 +41,19 @@ export function saveBottle(event: NostrEvent, relay: string): void {
     getTag(tags, "city")    ?? null,
     getTag(tags, "lat")     ?? null,
     getTag(tags, "lon")     ?? null,
-    ephemeral
+    ephemeral,
+    event.pubkey,
+    0 // Default is_sent=0; will be updated if it's ours
   );
+}
+
+/**
+ * Mark a bottle as being sent by the local user.
+ */
+export function markAsSent(eventId: string, senderPubkey: string): void {
+  getDb().prepare(`
+    UPDATE bottles SET is_sent = 1, pubkey = ? WHERE event_id = ?
+  `).run(senderPubkey, eventId);
 }
 
 // ── Get ───────────────────────────────────────────────────────
@@ -55,6 +64,31 @@ export function getBottle(eventId: string): Bottle | null {
   `).get(eventId) as RawRow | undefined;
 
   return row ? rowToBottle(row) : null;
+}
+
+export function getSentBottlePubkey(eventId: string): string | null {
+  const row = getDb().prepare(`
+    SELECT pubkey FROM bottles WHERE event_id = ? AND is_sent = 1
+  `).get(eventId) as { pubkey: string } | undefined;
+  return row?.pubkey ?? null;
+}
+
+export function getBottleRelay(eventId: string): string | null {
+  const row = getDb().prepare(`
+    SELECT relay FROM bottles WHERE event_id = ?
+  `).get(eventId) as { relay: string } | undefined;
+  return row?.relay ?? null;
+}
+
+// ── Delete ────────────────────────────────────────────────────
+
+/**
+ * Locally hide a bottle from all future list/get operations.
+ */
+export function softDeleteBottle(eventId: string): void {
+  // We can either DELETE or set a hidden flag. 
+  // For simplicity, we DELETE from local DB.
+  getDb().prepare(`DELETE FROM bottles WHERE event_id = ?`).run(eventId);
 }
 
 // ── List ──────────────────────────────────────────────────────
@@ -72,6 +106,7 @@ export function listBottles(filter: ListFilter = {}): Bottle[] {
   let query = `
     SELECT * FROM bottles
     WHERE (expires_at IS NULL OR expires_at > ?)
+      AND (read_at IS NULL) -- Hide burnt bottles
   `;
   const params: (string | number)[] = [now];
 
@@ -87,10 +122,6 @@ export function listBottles(filter: ListFilter = {}): Bottle[] {
 
 // ── Mark read ─────────────────────────────────────────────────
 
-/**
- * Mark a bottle as read. For ephemeral bottles this effectively
- * "burns" them — they won't be shown again.
- */
 export function markRead(eventId: string): void {
   const now = Math.floor(Date.now() / 1000);
   getDb().prepare(`
@@ -100,9 +131,6 @@ export function markRead(eventId: string): void {
 
 // ── Purge ─────────────────────────────────────────────────────
 
-/**
- * Delete all bottles whose TTL has expired or that have been read (if ephemeral).
- */
 export function purgeExpired(): number {
   const now = Math.floor(Date.now() / 1000);
   const result = getDb().prepare(`
@@ -132,6 +160,8 @@ interface RawRow {
   lon:        string | null;
   ephemeral:  number;
   read_at:    number | null;
+  pubkey:     string;
+  is_sent:    number;
 }
 
 function rowToBottle(row: RawRow): Bottle {
@@ -158,5 +188,7 @@ function rowToBottle(row: RawRow): Bottle {
     relay:     row.relay,
     location,
     ephemeral: row.ephemeral === 1,
+    pubkey:    row.pubkey,
+    isSent:    row.is_sent === 1,
   };
 }

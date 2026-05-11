@@ -11,8 +11,8 @@ import { buildDriftEvent }     from "../nostr/event_builder.js";
 import { signEvent }           from "../nostr/event_signer.js";
 import { pickRelay }           from "../relay/selector.js";
 import { broadcast }           from "../relay/broadcaster.js";
-import { saveBottle }          from "../storage/bottles.js";
-import type { BottleInput }    from "../../types/index.js";
+import { saveBottle, markAsSent } from "../storage/bottles.js";
+import type { BottleInput }     from "../../types/index.js";
 
 const schema = z.object({
   content:   z.string().min(1).max(2000).describe("Bottle text content"),
@@ -70,6 +70,7 @@ export function registerSendBottle(server: McpServer) {
 
       // 5. Persist locally
       saveBottle(signed, relayUrl);
+      markAsSent(signed.id, identity.pubkey);
 
       return {
         content: [{

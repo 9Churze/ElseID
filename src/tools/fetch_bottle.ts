@@ -60,19 +60,17 @@ export function registerFetchBottle(server: McpServer) {
       const picked = ranked.slice(0, input.limit ?? 5);
 
       // ── 4. Persist locally (for reply tracking) ───────────────
-      for (const event of picked) {
-        // We don't know which specific relay returned this event,
-        // so we store the first relay in our list as the source.
-        saveBottle(event, relayUrls[0] ?? "unknown");
+      for (const item of picked) {
+        saveBottle(item.event, item.relay);
       }
 
       // ── 5. Format response ────────────────────────────────────
-      const formatted = picked.map((event, i) => formatBottle(event, i + 1)).join("\n\n---\n\n");
+      const formatted = picked.map((item, i) => formatBottle(item.event, i + 1)).join("\n\n---\n\n");
 
       return {
         content: [{
           type: "text",
-          text: `🌊 Found ${picked.length} bottle${picked.length > 1 ? "s" : ""} drifting in from ${relayUrls.length} relay${relayUrls.length > 1 ? "s" : ""}:\n\n${formatted}`,
+          text: `🌊 Found ${picked.length} bottle${picked.length > 1 ? "s" : ""} drifting in from the relays:\n\n${formatted}`,
         }],
       };
     }

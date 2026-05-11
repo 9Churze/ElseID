@@ -1,7 +1,7 @@
 {
   "name": "bicean",
   "version": "0.1.0",
-  "description": "Decentralized AI drift bottle system over Nostr Relay network",
+  "description": "Zero-config decentralized AI drift bottle system over Nostr",
   "type": "module",
   "main": "dist/src/index.js",
   "scripts": {
@@ -12,11 +12,9 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.24.0",
     "@modelcontextprotocol/sdk": "^0.6.0",
     "@noble/hashes": "^1.4.0",
     "better-sqlite3": "^9.4.3",
-    "dotenv": "^16.4.5",
     "nostr-tools": "^2.3.1",
     "ws": "^8.17.0",
     "zod": "^3.22.4"

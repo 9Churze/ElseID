@@ -41,19 +41,19 @@ interface ScoredEvent {
  *   - Random jitter   0–20  (ensures variety on repeat fetches)
  */
 export function rankBottles(
-  events: NostrEvent[],
+  items: { event: NostrEvent; relay: string }[],
   filter: BottleFilter = {}
-): NostrEvent[] {
+): { event: NostrEvent; relay: string }[] {
   const now = Math.floor(Date.now() / 1000);
 
-  const scored: ScoredEvent[] = events.map((event) => ({
-    event,
-    score: scoreEvent(event, filter, now),
+  const scored = items.map((item) => ({
+    item,
+    score: scoreEvent(item.event, filter, now),
   }));
 
   scored.sort((a, b) => b.score - a.score);
 
-  return scored.map((s) => s.event);
+  return scored.map((s) => s.item);
 }
 
 function scoreEvent(event: NostrEvent, filter: BottleFilter, now: number): number {

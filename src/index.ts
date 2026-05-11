@@ -7,7 +7,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 
 import { registerSendBottle }  from "./tools/send_bottle.js";
 import { registerFetchBottle } from "./tools/fetch_bottle.js";
-import { registerReplyBottle } from "./tools/reply_bottle.js";
+import { registerReplyBottle }  from "./tools/reply_bottle.js";
+import { registerDeleteBottle } from "./tools/delete_bottle.js";
 import { registerRelayTools }  from "./tools/relay_tools.js";
 import { initDb }              from "./storage/db.js";
 import { purgeExpired }        from "./storage/bottles.js";
@@ -35,6 +36,7 @@ async function main() {
   registerSendBottle(server);
   registerFetchBottle(server);
   registerReplyBottle(server);
+  registerDeleteBottle(server);
   registerRelayTools(server);   // list_relays, check_relay_status, pick_relay, refresh_relays
 
   // 6. Start stdio transport (compatible with Claude MCP / Codex MCP / local runtime)

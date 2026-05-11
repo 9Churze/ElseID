@@ -14,6 +14,7 @@ import type { NostrFilter }            from "./filter.js";
 // ── Pool state ────────────────────────────────────────────────
 
 const _connections = new Map<string, WebSocket>();
+const _connecting  = new Map<string, Promise<WebSocket>>();
 
 function getOrOpen(relayUrl: string): Promise<WebSocket> {
   const existing = _connections.get(relayUrl);
@@ -21,29 +22,40 @@ function getOrOpen(relayUrl: string): Promise<WebSocket> {
     return Promise.resolve(existing);
   }
 
-  return new Promise((resolve, reject) => {
+  // Handle concurrent connection attempts to the same URL
+  const inProgress = _connecting.get(relayUrl);
+  if (inProgress) return inProgress;
+
+  const promise = new Promise<WebSocket>((resolve, reject) => {
     const ws = new WebSocket(relayUrl);
     const timer = setTimeout(() => {
       ws.terminate();
+      _connecting.delete(relayUrl);
       reject(new Error(`Connection timeout: ${relayUrl}`));
     }, WS_TIMEOUT_MS);
 
     ws.once("open", () => {
       clearTimeout(timer);
       _connections.set(relayUrl, ws);
+      _connecting.delete(relayUrl);
       resolve(ws);
     });
 
-    ws.once("error", (err) => {
+    ws.once("error", (err: Error) => {
       clearTimeout(timer);
       _connections.delete(relayUrl);
+      _connecting.delete(relayUrl);
       reject(err);
     });
 
     ws.once("close", () => {
       _connections.delete(relayUrl);
+      _connecting.delete(relayUrl);
     });
   });
+
+  _connecting.set(relayUrl, promise);
+  return promise;
 }
 
 /**
@@ -70,16 +82,16 @@ export async function subscribe(
   relayUrl: string,
   filter: NostrFilter,
   timeoutMs = WS_TIMEOUT_MS * 2
-): Promise<NostrEvent[]> {
+): Promise<{ event: NostrEvent; relay: string }[]> {
   const ws    = await getOrOpen(relayUrl);
   const subId = newSubId();
-  const events: NostrEvent[] = [];
+  const results: { event: NostrEvent; relay: string }[] = [];
   const now = Math.floor(Date.now() / 1000);
 
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
       cleanup();
-      resolve(events);
+      resolve(results);
     }, timeoutMs);
 
     function cleanup() {
@@ -101,7 +113,7 @@ export async function subscribe(
 
       if (type === "EOSE" && id === subId) {
         cleanup();
-        resolve(events);
+        resolve(results);
         return;
       }
 
@@ -118,10 +130,10 @@ export async function subscribe(
           if (!isNaN(ttlSec) && event.created_at + ttlSec < now) return;
         }
 
-        events.push(event);
-        if (events.length >= (filter.limit ?? FETCH_LIMIT)) {
+        results.push({ event, relay: relayUrl });
+        if (results.length >= (filter.limit ?? FETCH_LIMIT)) {
           cleanup();
-          resolve(events);
+          resolve(results);
         }
       }
     }
@@ -137,26 +149,26 @@ export async function subscribe(
 export async function subscribeMany(
   relayUrls: string[],
   filter: NostrFilter
-): Promise<NostrEvent[]> {
+): Promise<{ event: NostrEvent; relay: string }[]> {
   const results = await Promise.allSettled(
     relayUrls.map((url) => subscribe(url, filter))
   );
 
   const seen = new Set<string>();
-  const merged: NostrEvent[] = [];
+  const merged: { event: NostrEvent; relay: string }[] = [];
 
   for (const r of results) {
     if (r.status !== "fulfilled") continue;
-    for (const event of r.value) {
-      if (!seen.has(event.id)) {
-        seen.add(event.id);
-        merged.push(event);
+    for (const item of r.value) {
+      if (!seen.has(item.event.id)) {
+        seen.add(item.event.id);
+        merged.push(item);
       }
     }
   }
 
   // Sort by created_at descending (newest first)
-  return merged.sort((a, b) => b.created_at - a.created_at);
+  return merged.sort((a, b) => b.event.created_at - a.event.created_at);
 }
 
 // ── Type guard ────────────────────────────────────────────────

@@ -31,10 +31,14 @@ export function createIdentity(level: AnonymityLevel): Identity {
   const { privkey, pubkey } = newKeypair();
   const identity: Identity  = { level, pubkey, privkey, createdAt: nowSec() };
 
-  getDb().prepare(`
-    INSERT OR IGNORE INTO identities (pubkey, privkey, level, created_at)
-    VALUES (?, ?, ?, ?)
-  `).run(identity.pubkey, identity.privkey, identity.level, identity.createdAt);
+  // Only persist if the level is 'persistent'. 
+  // 'full' and 'ephemeral' keys stay in memory only.
+  if (level === "persistent") {
+    getDb().prepare(`
+      INSERT OR IGNORE INTO identities (pubkey, privkey, level, created_at)
+      VALUES (?, ?, ?, ?)
+    `).run(identity.pubkey, identity.privkey, identity.level, identity.createdAt);
+  }
 
   return identity;
 }

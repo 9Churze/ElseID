@@ -29,19 +29,19 @@ npm run setup
 
 ```mermaid
 graph TD
-    A[安装: npm run setup] --> B[配置: AI 调频员指令集]
-    B --> C{用户交互}
+    A["安装: npm run setup"] --> B["配置: AI 调频员指令集"]
+    B --> C{"用户交互"}
     
-    C -->|发送| D[AI 客户端: 识别情绪/标签]
-    D --> E[send_bottle: 加密签名并广播]
+    C -->|发送| D["AI 客户端: 识别情绪/标签"]
+    D --> E["send_bottle: 加密签名并广播"]
     
-    C -->|打捞| F[fetch_bottle: 扫描全球中继站]
-    F --> G[本地排序: 根据契合度展示]
-    G --> H[AI 引导: 情感共鸣与回复]
+    C -->|打捞| F["fetch_bottle: 扫描全球中继站"]
+    F --> G["本地排序: 根据契合度展示"]
+    G --> H["AI 引导: 情感共鸣与回复"]
     
-    H -->|回应| I[reply_bottle: 回溯源头发送回信]
+    H -->|回应| I["reply_bottle: 回溯源头发送回信"]
     
-    C -->|撤回| J[delete_bottle: 发送撤回请求并本地销毁]
+    C -->|撤回| J["delete_bottle: 发送撤回请求并本地销毁"]
 ```
 
 ---

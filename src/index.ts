@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — MCP Server Entry Point
+// ElseID — MCP Server Entry Point
 // ============================================================
 
 import { McpServer }           from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -24,7 +24,7 @@ async function main() {
 
   // 3. Create MCP server
   const server = new McpServer({
-    name:    "bicean-drifter",
+    name:    "elseid-mcp",
     version: "0.2.0",
   });
 
@@ -40,11 +40,11 @@ async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  console.error("[Bicean] Drifter MCP server started ✓");
+  console.error("[ElseID] Drifter MCP server started ✓");
 
   // 6. Graceful shutdown
   const shutdown = () => {
-    console.error("[Bicean] Shutting down…");
+    console.error("[ElseID] Shutting down…");
     closeAll();
     process.exit(0);
   };
@@ -53,6 +53,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("[Bicean] Fatal error:", err);
+  console.error("[ElseID] Fatal error:", err);
   process.exit(1);
 });

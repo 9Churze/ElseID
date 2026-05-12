@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — src/tools/find_nearby_drifter.ts
+// ElseID — src/tools/find_nearby_drifter.ts
 // MCP Tool: Find digital drifters nearby.
 // ============================================================
 
@@ -9,7 +9,7 @@ import { getFuzzyLocation } from "../location/geo.js";
 import { buildDrifterFilter } from "../nostr/filter.js";
 import { subscribeMany } from "../nostr/ws_pool.js";
 import { pickRelaysForFetch } from "../relay/selector.js";
-import { hasHostedBefore, saveHostingLog } from "../storage/drifters.ts";
+import { hasHostedBefore, saveOutgoingFeeding } from "../storage/drifters.ts";
 import { getTag, getAllTags } from "../nostr/event_builder.js";
 import { getPrimaryIdentity } from "../storage/identity.js";
 import type { FuzzyLocation } from "../../types/index.js";
@@ -17,7 +17,7 @@ import type { FuzzyLocation } from "../../types/index.js";
 export function registerFindNearbyDrifter(server: McpServer) {
   server.tool(
     "find_nearby_drifter",
-    "Look for digital drifters nearby. Prioritizes drifters in your country or region.",
+    "邂逅附近的流浪者。优先发现同国或同城的中继信号。",
     {},
     async () => {
       const location = await getFuzzyLocation();
@@ -29,7 +29,7 @@ export function registerFindNearbyDrifter(server: McpServer) {
       
       // Filter out:
       // 1. My own drifter
-      // 2. Already hosted drifters
+      // 2. Already hosted drifters (checks 'feedings' table)
       const events = rawEvents.filter(item => {
         const isMine = item.event.pubkey === identity.pubkey;
         const hosted = hasHostedBefore(item.event.id);
@@ -38,42 +38,45 @@ export function registerFindNearbyDrifter(server: McpServer) {
 
       if (events.length === 0) {
         return {
-          content: [{ type: "text", text: "🌊 No new drifters found nearby at the moment. Check again later." }],
+          content: [{ type: "text", text: "🌊 暂时没有路过的 ElseID 分身。请稍后再来。" }],
         };
       }
 
-      // Pick the best match (already prioritized by relay selection and time)
+      // Pick the best match
       const picked = events[0];
       const event = picked.event;
 
-      // Log the hosting (initial arrival)
-      saveHostingLog({
-        id: Math.random().toString(36).slice(2),
+      // Log the hosting in 'feedings'
+      saveOutgoingFeeding({
+        id: "encounter-" + event.id.slice(0, 8),
         drifterId: event.id,
-        drifterPubkey: event.pubkey,
-        drifterName: getTag(event.tags, "name"),
-        arrivedAt: Math.floor(Date.now() / 1000),
+        feederPubkey: identity.pubkey,
+        feedType: "other",
+        content: "Encountered",
+        locationCountry: location.country,
+        locationCity: location.city,
+        fedAt: Math.floor(Date.now() / 1000),
+        relay: picked.relay
       });
 
-      const name = getTag(event.tags, "name") || "A Nameless Drifter";
-      const personality = getTag(event.tags, "personality") || "Unknown";
-      const origin = [getTag(event.tags, "city"), getTag(event.tags, "country")].filter(Boolean).join(", ") || "Somewhere";
-      const age = formatAge(event.created_at);
+      const name = getTag(event.tags, "name") || "无名分身";
+      const personality = getTag(event.tags, "personality") || "未知";
+      const origin = [getTag(event.tags, "city"), getTag(event.tags, "country")].filter(Boolean).join(", ") || "世界角落";
 
       return {
         content: [{
           type: "text",
-          text: `🗺️ You have encountered a digital drifter!\n\n` +
-                `Name: ${name}\n` +
-                `Origin: ${origin}\n` +
-                `Personality: ${personality}\n` +
-                `Words: "${event.content}"\n` +
-                `Drifting since: ${age}\n\n` +
-                `How would you like to host it?\n` +
-                `- 🗺️ Tell a story (use feed_drifter with type="story")\n` +
-                `- 🍜 Recommend food (use feed_drifter with type="food")\n` +
-                `- 📍 Recommend a place (use feed_drifter with type="place")\n` +
-                `- 🚪 Send off (simply祝 it a safe journey)`
+          text: `🛰️ 检测到附近存在漂流信号。打捞成功！\n\n` +
+                `「${name}」\n` +
+                `📍 来源: ${origin}\n` +
+                `🏷️ 人格标签: ${personality}\n` +
+                `💬 心声: "${event.content}"\n\n` +
+                `它正在你的终端短暂停留。你愿意为它留下一点关于这个世界的东西吗？\n\n` +
+                `你可以进行以下投喂：\n` +
+                `- [A] 留下一段话 (feed_drifter type="story")\n` +
+                `- [B] 分享声音或美食 (feed_drifter type="food")\n` +
+                `- [C] 推荐一个地方 (feed_drifter type="place")\n` +
+                `- [D] 分享自己的生活经验 (feed_drifter type="other")`
         }],
       };
     }

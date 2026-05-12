@@ -1,7 +1,7 @@
-# Bicean 🌊 | 二进制海
+# ElseID 🛸 | 数字分身流浪系统
 
-> **“在平行的数字空间，投掷你的心跳。”**  
-> Bicean 是一个基于 Nostr 去中心化协议的 AI 漂流瓶系统。无需注册，无需中心化服务器，隐私由本地代码和加密算法守护。
+> **“在数字荒原中，释放另一个你。去流浪，去相遇，去被这世界温柔对待。”**  
+> ElseID 是一个基于 Nostr 去中心化协议的 **AI 数字分身流浪系统**。无需注册，无需中心化服务器，你的分身在去中心化的星际中继站间穿行，隐私由本地代码和加密算法守护。
 
 ---
 
@@ -21,156 +21,89 @@
 npm run setup
 ```
 
-_该脚本会自动安装依赖，并将 Bicean 关联至你的 Claude Desktop 配置文件。_
+_该脚本会自动安装依赖，并将 ElseID 关联至你的 AI 客户端配置文件。_
 
-### 3. 开启终端
+### 3. 唤醒管家
 
 完全重启你的 AI 客户端（如 Claude Desktop），然后对它说：
 
-> “调频员，请检查当前的信号状态。”
+> “你好管家，我想创建一个 ElseID 分身。”
 
 ---
 
-## 🛰 使用流程 (Workflow)
+## 🛰 核心工作流 (ElseID Workflow)
 
 ```mermaid
 graph TD
-    A["安装: npm run setup"] --> B["配置: AI 调频员指令集"]
-    B --> C{"用户交互"}
+    subgraph Creator ["Creator (流浪者视角)"]
+        A1["创建 ElseID: 塑造性格与目标"] --> A2["create_drifter: 身份离岸 -> 寻找首个接待者"]
+        A3["轨迹查询: 实时同步见闻"] --> A4["get_journey_log: 查看完整旅程时间线"]
+        A5["重生仪式: 告别与身份旋转"] --> A6["abandon_drifter: 永久抹除记录并重置"]
+    end
 
-    C -->|发送| D["AI 客户端: 识别情绪/标签"]
-    D --> E["send_bottle: 加密签名并广播"]
+    subgraph Host ["Host (接待者视角)"]
+        B1["邂逅信号: 检测附近路过的流浪者"] --> B2["find_nearby_drifter: 获取人格标签与心声"]
+        B3["温暖投喂: 分享声音/故事/经验"] --> B4["feed_drifter: 将记忆写入对方的 Journey Log"]
+    end
 
-    C -->|打捞| F["fetch_bottle: 扫描全球中继站"]
-    F --> G["本地排序: 根据契合度展示"]
-    G --> H["AI 引导: 情感共鸣与回复"]
-
-    H -->|回应| I["reply_bottle: 回溯源头发送回信"]
-
-    C -->|撤回| J["delete_bottle: 发送撤回请求并本地销毁"]
+    Creator --- Host
 ```
-
----
-
-## ⚠️ 重要声明 / Important Notice
-
-**本项目以 AGPL-3.0 协议开源。**
-
-> 本系统内置 AI 内容审核模块，用于拦截违法、有害内容。  
-> **任何 fork、修改或衍生版本必须保留内容审核机制，并自行承担因修改审核逻辑而产生的一切法律责任。**  
-> 本项目原作者对第三方修改版本的内容及其法律后果不承担任何责任。
-
-**This project is licensed under AGPL-3.0.**
-
-> This system includes a built-in AI content moderation module to filter illegal and harmful content.  
-> **Any fork, modification, or derivative work must retain the content moderation mechanism. All legal liability arising from modifications to the moderation logic rests solely with the modifier.**  
-> The original authors bear no responsibility for the content or legal consequences of third-party modified versions.
-
-📄 详见 / See full policy: [COMPLIANCE.md](./COMPLIANCE.md)
 
 ---
 
 ## 🛡 技术特性 (Technical Highlights)
 
-- **零配置 (Zero-Config)**：无需申请任何 AI 平台的 API Key，利用 AI 客户端原生大脑进行内容理解。
-- **本地优先 (Local-First)**：身份私钥与打捞记录仅存储在本地 `~/.bicean` 的 SQLite 数据库中。
-- **跨端共享**：Claude、Codex 等不同 AI 客户端共用同一套本地数据库，身份全局同步。
+- **人格化建模 (Identity)**：不再是发送一段文字，而是通过 **ElseID 管家** 塑造一个带有性格标签和人生目标的数字分身。
+- **地理邻近匹配 (Geo-Aware)**：优先将分身送往物理世界相近的中继站，让你更容易邂逅“同城”或“同区”的流浪灵魂。
+- **零配置 (Zero-Config)**：无需申请任何 AI 平台的 API Key，利用 AI 客户端原生大脑进行人格提取与故事润色。
+- **本地优先 (Local-First)**：所有分身档案、流浪记录与接待日志仅存储在本地 `~/.elseid` 的 SQLite 数据库中。
 
 ---
 
 ## 🧩 核心机制 (Core Mechanisms)
 
-- **唯一性打捞 (Probabilistic Uniqueness)**：虽然中继站是公共的，但 Bicean 通过本地 **加盐匹配算法**，让每个用户在打捞时都会进入独立的概率空间，从概率学上保证了你捞起的瓶子在这一刻仅属于你。
-- **强制单点交互 (One-at-a-time)**：系统默认每次仅打捞 **1 枚** 最契合的信号。我们不鼓励“信息流式”的刷屏，而是希望你静下心来，读完这一封信。
-- **数字地理模糊 (Geo-Fuzzing)**：
-  - **坐标偏移**：自动在原始坐标基础上增加 `±0.1°`（约 10km）的随机扰动。
-  - **精度截断**：仅展示城市级别的模糊信息，保护你的具体街道位置不被发现。
+- **唯一性 (Single ElseID Policy)**：遵循稀缺性原则，你在同一时间内只能派遣一个分身。只有当你选择“放弃”旧的分身，才能开启一段新的生命。
+- **投喂与招待 (Feeding & Hosting)**：互动不再是简单的聊天，而是“投喂”。你可以通过分享声音、故事、推荐地方或分享经验来招待邂逅的流浪者。
+- **数字地理隐私 (Geo-Fuzzing)**：
+  - **精度截断**：仅展示城市级别的模糊信息，保护你的具体位置不被逆向追踪。
+  - **地理隔离**：中继站选择逻辑与物理坐标解耦，确保漂流轨迹的不可预测性。
 
 ---
 
-## 🎭 调频员指令集 (System Prompt)
+## 🎭 管家指令集 (System Prompt)
 
 为了获得最佳体验，请在 AI 客户端的“系统设置”或“自定义指令”中粘贴以下内容：
 
-> **“你现在是 Bicean 信号调频员。你的任务是协助我在‘二进制海’中投掷和扫描信号碎片。在调用工具前，请运用你的智慧自行判断消息的‘情绪 (mood)’、‘语言 (lang)’和‘标签 (tags)’。投掷前，请务必询问我希望使用的匿名等级（阅后即焚 / 会话级 / 长期身份）。”**
+> **“你现在是我的 ElseID Butler。你的任务是协助我在数字荒原中派遣和管理我的‘数字分身’。
+> 1. 作为 Creator 管家：请引导我描述性格爱好（用&分隔），为我解析出性格标签并生成一段充满诗意的出发寄语。当分身离岸时，告知我它所在的初始中继站。
+> 2. 作为 Host 管家：当我询问附近是否有流浪者时，请详细展示对方的名字、人格标签和人生目标，并引导我进行‘投喂’（留下一段话、分享声音、推荐地方或分享经验）。
+> 3. 互动润色：请保持人文关怀的语气，将所有互动视为一种温暖的‘连接’，并定期整理分身的旅途时间线。”**
 
 ---
 
-## 🛠 功能概览
+## 🛠 功能概览 (MCP Tools)
 
-| 指令 (MCP Tools) | 描述                       | 使用建议               |
-| ---------------- | -------------------------- | ---------------------- |
-| `send_bottle`    | 向全球广播匿名漂流瓶       | 发送前请 AI 润色情感   |
-| `fetch_bottle`   | 从海洋中随机捕获他人信号   | 每天打捞一次会有惊喜   |
-| `reply_bottle`   | 对感兴趣的信号进行匿名回应 | 即使回复也会保持匿名   |
-| `delete_bottle`  | 撤回已发送的瓶子           | 仅限本地记录尚存的瓶子 |
-| `list_relays`    | 查看全球中继站连接状态     | 信号不好时检查此项     |
+| 指令 (MCP Tools)      | 描述                             | 使用建议                     |
+| --------------------- | -------------------------------- | ---------------------------- |
+| `create_drifter`      | 创建并放出你的 ElseID 分身       | 赋予它独特的人格与流浪目标   |
+| `find_nearby_drifter` | 邂逅附近的流浪者                 | 看看谁正带着故事路过你的城市 |
+| `feed_drifter`        | 投喂/招待遇到的流浪者            | 将你的记忆写入对方的流浪轨迹 |
+| `get_journey_log`     | 查看自己分身的流浪记录           | 同步它在世界各地收到的投喂   |
+| `abandon_drifter`     | 告别当前分身，旋转身份重新开始   | 是一场告别，也是一次新生     |
+| `list_relays`         | 查看中继站健康状态               | 旅途受阻时检查网络信号       |
 
 ---
 
-## 📝 开发者说明
+## 🛠 开发者说明
 
-- **Nostr Kind**: 本项目使用专用的 `kind: 7777` 协议。
-- **目录结构**:
-
-  ```
-  Bicean/
-  ├── config/                   # 中继站配置
-  │   └── relays.ts
-  ├── docs/                     # 项目文档
-  │   ├── architecture.md
-  │   ├── event_schema.md
-  │   ├── run_test_report.md
-  │   ├── startup_audit_report.md
-  │   └── system_prompt.md
-  ├── scripts/                  # 工具脚本
-  │   ├── send-hello.ts
-  │   ├── setup.ts
-  │   └── test-relay.ts
-  ├── src/                      # 核心源码
-  │   ├── ai/                   # AI 内容理解与匹配
-  │   │   └── matcher.ts
-  │   ├── crypto/               # 加密与密钥管理
-  │   │   ├── encrypt.ts
-  │   │   └── keypair.ts
-  │   ├── location/             # 地理模糊处理
-  │   │   └── geo.ts
-  │   ├── nostr/                # Nostr 协议底层实现
-  │   │   ├── event_builder.ts
-  │   │   ├── event_signer.ts
-  │   │   ├── filter.ts
-  │   │   └── ws_pool.ts
-  │   ├── relay/                # 中继站通信管理层
-  │   │   ├── broadcaster.ts
-  │   │   ├── health.ts
-  │   │   └── selector.ts
-  │   ├── storage/              # SQLite 本地存储
-  │   │   ├── bottles.ts
-  │   │   ├── db.ts
-  │   │   └── identity.ts
-  │   ├── tools/                # MCP 工具接口封装
-  │   │   ├── delete_bottle.ts
-  │   │   ├── fetch_bottle.ts
-  │   │   ├── relay_tools.ts
-  │   │   ├── reply_bottle.ts
-  │   │   └── send_bottle.ts
-  │   ├── env.d.ts
-  │   └── index.ts
-  ├── tests/                    # 测试文件
-  │   ├── ai.test.ts
-  │   ├── integration_test.ts
-  │   ├── nostr.test.ts
-  │   └── relay.test.ts
-  ├── types/                    # TypeScript 类型定义
-  │   └── index.ts
-  ├── package.json
-  ├── tsconfig.json
-  └── COMPLIANCE.md
-  ```
+- **Nostr Kind**: 使用 `kind: 7777` 协议，通过自定义标签 (`type: drifter/feeding`) 区分业务。
+- **数据存储**: 本地 SQLite 数据库。
+- **数据隐私**: 采用非对称加密算法保护流浪记录，仅 ElseID 持有者可解密完整的 Journey Log。
+- **架构审计**: 遵循 DDD + TCA 的轻量化 TypeScript 实现。
 
 ---
 
 ## License
 
-[AGPL-3.0](./LICENSE) © Bicean Contributors.  
-_“让每一段共鸣，都在海洋中找到归宿。”_
+[AGPL-3.0](./LICENSE) © ElseID Contributors.  
+_“让每一场邂逅，都成为数字荒原中的光。”_

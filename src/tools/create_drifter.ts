@@ -1,6 +1,6 @@
 // ============================================================
-// Bicean — src/tools/create_drifter.ts
-// MCP Tool: Create and launch a digital drifter.
+// ElseID — src/tools/create_drifter.ts
+// MCP Tool: Create and launch an ElseID drifter.
 // ============================================================
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -22,13 +22,13 @@ const schema = z.object({
 export function registerCreateDrifter(server: McpServer) {
   server.tool(
     "create_drifter",
-    "Create and launch your digital drifter. You can only have one active drifter at a time.",
+    "创建并放出你的 ElseID 分身。你同一时间只能拥有一个活跃分身。",
     schema.shape,
     async (input) => {
       const identity = getPrimaryIdentity();
       if (identity.activeDrifterId) {
         return {
-          content: [{ type: "text", text: "❌ Your drifter is already on a journey. Abandon it first if you want to start fresh." }],
+          content: [{ type: "text", text: "❌ 你的 ElseID 正在旅途中。如需开启新旅程，请先进行重生仪式（abandon_drifter）。" }],
           isError: true,
         };
       }
@@ -78,10 +78,9 @@ export function registerCreateDrifter(server: McpServer) {
       return {
         content: [{
           type: "text",
-          text: `🚀 Your digital drifter 「${input.name}」 has departed!\n\n` +
-                `Journey ID: ${signed.id}\n` +
-                `Relay: ${relayUrl}\n` +
-                `Departure: "${departureMsg}"`
+          text: `🚀 ElseID 创建成功！\n\n「${input.name}」已离岸，正在进入漂流网络…\n\n` +
+                `📍 初始中继站: ${relayUrl}\n` +
+                `🌊 当前状态: 正在寻找第一个愿意接待它的人。`
         }],
       };
     }

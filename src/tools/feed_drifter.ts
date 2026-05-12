@@ -1,6 +1,6 @@
 // ============================================================
-// Bicean — src/tools/feed_drifter.ts
-// MCP Tool: Feed a digital drifter with stories/food/places.
+// ElseID — src/tools/feed_drifter.ts
+// MCP Tool: Feed an ElseID drifter with stories/food/places.
 // ============================================================
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -11,7 +11,7 @@ import { buildFeedingEvent } from "../nostr/event_builder.js";
 import { signEvent } from "../nostr/event_signer.js";
 import { pickRelay } from "../relay/selector.js";
 import { broadcast } from "../relay/broadcaster.js";
-import { saveFeeding } from "../storage/drifters.ts";
+import { saveOutgoingFeeding } from "../storage/drifters.ts";
 import { checkContent } from "../ai/moderator.js";
 
 const schema = z.object({
@@ -24,13 +24,13 @@ const schema = z.object({
 export function registerFeedDrifter(server: McpServer) {
   server.tool(
     "feed_drifter",
-    "Feed a digital drifter you have encountered. This helps the drifter continue its journey with your memory.",
+    "接待并投喂一个路过的 ElseID 分身。你的投喂将被写入对方的流浪轨迹。",
     schema.shape,
     async (input) => {
       const moderation = await checkContent(input.content);
       if (!moderation.passed) {
         return {
-          content: [{ type: "text", text: `🚫 Content rejected: ${moderation.reason}` }],
+          content: [{ type: "text", text: `🚫 内容审核未通过: ${moderation.reason}` }],
           isError: true,
         };
       }
@@ -51,12 +51,12 @@ export function registerFeedDrifter(server: McpServer) {
 
       if (!result.success) {
         return {
-          content: [{ type: "text", text: `⚠️ Feeding failed: ${result.message}` }],
+          content: [{ type: "text", text: `⚠️ 投喂失败: ${result.message}` }],
           isError: true,
         };
       }
 
-      saveFeeding({
+      saveOutgoingFeeding({
         id: signed.id,
         drifterId: input.drifter_event_id,
         feederPubkey: identity.pubkey,
@@ -71,8 +71,9 @@ export function registerFeedDrifter(server: McpServer) {
       return {
         content: [{
           type: "text",
-          text: `🍱 You have fed the drifter with a ${input.feed_type}!\n\n` +
-                `It carries your memory as it continues its journey.`
+          text: `🍱 投喂完成。\n\n你分享的内容已经写入对方的 Journey Log。\n` +
+                `它将在下一次漂流时，带着你的善意继续前行。\n\n` +
+                `感谢你愿意接待一个陌生人的另一种人生。`
         }],
       };
     }

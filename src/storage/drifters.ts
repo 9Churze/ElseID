@@ -70,7 +70,10 @@ export function getMyActiveDrifter(): Drifter | null {
 
 // ── Feeding Persistence ────────────────────────────────────────
 
-export function saveFeeding(feeding: Feeding): void {
+/**
+ * Save an interaction where I hosted/fed someone else's drifter.
+ */
+export function saveOutgoingFeeding(feeding: Feeding): void {
   getDb().prepare(`
     INSERT OR IGNORE INTO feedings (
       id, drifter_id, feeder_pubkey, feed_type, content,
@@ -89,34 +92,43 @@ export function saveFeeding(feeding: Feeding): void {
   );
 }
 
-export function getFeedingsForDrifter(drifterId: string): Feeding[] {
-  const rows = getDb().prepare(`
-    SELECT * FROM feedings WHERE drifter_id = ? ORDER BY fed_at DESC
-  `).all(drifterId) as any[];
-  return rows.map(rowToFeeding);
+/**
+ * Check if I have already hosted/fed a specific drifter.
+ */
+export function hasHostedBefore(drifterId: string): boolean {
+  const row = getDb().prepare(`SELECT 1 FROM feedings WHERE drifter_id = ?`).get(drifterId);
+  return !!row;
 }
 
-// ── Hosting Log Persistence ────────────────────────────────────
+// ── Journey Log Persistence ────────────────────────────────────
 
-export function saveHostingLog(log: HostingLog): void {
+/**
+ * Save a record of my own drifter being hosted/fed.
+ */
+export function saveIncomingFeeding(feeding: Feeding): void {
   getDb().prepare(`
     INSERT OR IGNORE INTO hosting_log (
-      id, drifter_id, drifter_pubkey, drifter_name, arrived_at, feed_id, sent_off_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      id, drifter_id, feeder_pubkey, feed_type, content,
+      location_country, location_city, fed_at, relay
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
-    log.id,
-    log.drifterId,
-    log.drifterPubkey,
-    log.drifterName ?? null,
-    log.arrivedAt,
-    log.feedId ?? null,
-    log.sentOffAt ?? null
+    feeding.id,
+    feeding.drifterId,
+    feeding.feederPubkey,
+    feeding.feedType,
+    feeding.content,
+    feeding.locationCountry ?? null,
+    feeding.locationCity ?? null,
+    feeding.fedAt,
+    feeding.relay
   );
 }
 
-export function hasHostedBefore(drifterId: string): boolean {
-  const row = getDb().prepare(`SELECT 1 FROM hosting_log WHERE drifter_id = ?`).get(drifterId);
-  return !!row;
+export function getMyDrifterJourney(drifterId: string): Feeding[] {
+  const rows = getDb().prepare(`
+    SELECT * FROM hosting_log WHERE drifter_id = ? ORDER BY fed_at DESC
+  `).all(drifterId) as any[];
+  return rows.map(rowToFeeding);
 }
 
 // ── Row mapping ───────────────────────────────────────────────
@@ -149,7 +161,6 @@ function rowToFeeding(row: any): Feeding {
     locationCountry: row.location_country ?? undefined,
     locationCity:    row.location_city    ?? undefined,
     fedAt:           row.fed_at,
-    thankedAt:       row.thanked_at       ?? undefined,
     relay:           row.relay,
   };
 }

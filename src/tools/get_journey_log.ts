@@ -1,34 +1,34 @@
 // ============================================================
-// Bicean — src/tools/get_journey_log.ts
-// MCP Tool: View the journey log of your active drifter.
+// ElseID — src/tools/get_journey_log.ts
+// MCP Tool: View the journey log of your active ElseID.
 // ============================================================
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { buildFeedingFilter } from "../nostr/filter.js";
 import { subscribeMany } from "../nostr/ws_pool.js";
-import { getMyActiveDrifter, saveFeeding, getFeedingsForDrifter } from "../storage/drifters.ts";
+import { getMyActiveDrifter, saveIncomingFeeding, getMyDrifterJourney } from "../storage/drifters.ts";
 import { getTag } from "../nostr/event_builder.js";
 
 export function registerGetJourneyLog(server: McpServer) {
   server.tool(
     "get_journey_log",
-    "Check the journey log and feedings of your active digital drifter.",
+    "查询你的 ElseID 分身的近况与完整流浪轨迹。",
     {},
     async () => {
       const drifter = getMyActiveDrifter();
       if (!drifter) {
         return {
-          content: [{ type: "text", text: "❌ You don't have an active drifter roaming the world." }],
+          content: [{ type: "text", text: "❌ 你目前没有正在流浪的 ElseID。请先让它出发。" }],
           isError: true,
         };
       }
 
-      // 1. Sync feedings from the drifter's relay
+      // 1. Sync feedings from the drifter's relay into hosting_log (my journey)
       const filter = buildFeedingFilter(drifter.id);
       const remoteFeedings = await subscribeMany([drifter.relay], filter);
       
       for (const item of remoteFeedings) {
-        saveFeeding({
+        saveIncomingFeeding({
           id: item.event.id,
           drifterId: drifter.id,
           feederPubkey: item.event.pubkey,
@@ -41,26 +41,30 @@ export function registerGetJourneyLog(server: McpServer) {
         });
       }
 
-      // 2. Load all feedings from DB
-      const localFeedings = getFeedingsForDrifter(drifter.id);
+      // 2. Load all journey records from hosting_log
+      const localJourney = getMyDrifterJourney(drifter.id);
 
       const ageDays = Math.floor((Date.now() / 1000 - drifter.departedAt) / 86400);
       
-      let report = `你的分身「${drifter.name}」已出发 ${ageDays} 天\n最近的旅程：\n\n`;
+      let report = `已收到「${drifter.name}」的最新旅程记录（离岸 ${ageDays} 天）：\n\n`;
 
-      if (localFeedings.length === 0) {
-        report += "📍 它还在孤独地流浪，尚未有人接待它。\n";
+      if (localJourney.length === 0) {
+        report += "📍 初始中继站: " + drifter.relay + "\n";
+        report += "🌊 当前状态: 正在寻找第一个愿意接待它的人。\n";
       } else {
-        for (const f of localFeedings) {
-          const day = Math.floor((f.fedAt - drifter.departedAt) / 86400);
-          const location = [f.locationCity, f.locationCountry].filter(Boolean).join(", ") || "Unknown Location";
-          report += `📍 Day ${day} · ${location}\n`;
-          report += `   有人分享了 ${f.feedType}\n`;
-          report += `   "${f.content}"\n\n`;
+        const latest = localJourney[0];
+        const latestLoc = [latest.locationCity, latest.locationCountry].filter(Boolean).join(" · ") || "未知地点";
+        report += `📍 当前位置: ${latestLoc}\n`;
+        report += `📝 最新见闻: "${latest.content}"\n`;
+        report += `🌊 当前状态: 正在继续漂流中。\n\n`;
+        report += `--- 完整 Journey Log ---\n`;
+        
+        for (const f of localJourney) {
+          const location = [f.locationCity, f.locationCountry].filter(Boolean).join(" · ") || "未知";
+          const date = new Date(f.fedAt * 1000).toLocaleDateString();
+          report += `[${date}] ${location}: 有位 Host 分享了 ${f.feedType} -> "${f.content}"\n`;
         }
       }
-
-      report += "它现在还在路上。";
 
       return {
         content: [{ type: "text", text: report }],

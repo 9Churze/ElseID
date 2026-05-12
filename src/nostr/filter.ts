@@ -1,10 +1,9 @@
 // ============================================================
 // Bicean — src/nostr/filter.ts
-// Builds Nostr REQ subscription filters from BottleFilter.
+// Builds Nostr REQ subscription filters for drifters and feedings.
 // ============================================================
 
-import { DRIFT_BOTTLE_KIND } from "../../types/index.js";
-import type { BottleFilter }  from "../../types/index.js";
+import { DRIFTER_KIND } from "../../types/index.js";
 
 export interface NostrFilter {
   kinds:  number[];
@@ -16,43 +15,25 @@ export interface NostrFilter {
 }
 
 /**
- * Convert a BottleFilter into a Nostr REQ filter object.
- * The relay will match events where ALL specified conditions are true.
+ * Build a filter to find drifters.
  */
-export function buildFilter(filter: BottleFilter = {}): NostrFilter {
-  const nostrFilter: NostrFilter = {
-    kinds: [DRIFT_BOTTLE_KIND],
-    limit: filter.limit ?? 20,
+export function buildDrifterFilter(limit = 20): NostrFilter {
+  return {
+    kinds: [DRIFTER_KIND],
+    limit,
+    "#type": ["drifter"],
   };
-
-  if (filter.since) nostrFilter.since = filter.since;
-  if (filter.until) nostrFilter.until = filter.until;
-
-  // Tag filter for mood: relays that support NIP-12 generic tag queries
-  if (filter.mood) {
-    nostrFilter["#mood"] = [filter.mood];
-  }
-
-  // Tag filter for language
-  if (filter.lang) {
-    nostrFilter["#lang"] = [filter.lang];
-  }
-
-  // Always filter to drift-type bottles only
-  nostrFilter["#type"] = ["drift"];
-
-  return nostrFilter;
 }
 
 /**
- * Build a filter to fetch replies to a specific bottle.
+ * Build a filter to fetch feedings for a specific drifter.
  */
-export function buildReplyFilter(eventId: string, limit = 10): NostrFilter {
+export function buildFeedingFilter(drifterId: string, limit = 50): NostrFilter {
   return {
-    kinds:  [DRIFT_BOTTLE_KIND],
+    kinds:  [DRIFTER_KIND],
     limit,
-    "#e":   [eventId],
-    "#type": ["drift-reply"],
+    "#e":   [drifterId],
+    "#type": ["feeding"],
   };
 }
 

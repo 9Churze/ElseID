@@ -36,32 +36,50 @@ export async function initDb(): Promise<void> {
   _db.pragma("foreign_keys = ON");
 
   _db.exec(`
-    CREATE TABLE IF NOT EXISTS bottles (
-      event_id    TEXT PRIMARY KEY,
-      content     TEXT NOT NULL,
-      mood        TEXT,
-      tone        TEXT,
-      lang        TEXT,
-      tags        TEXT,       -- JSON array
-      ttl         INTEGER,
-      created_at  INTEGER NOT NULL,
-      expires_at  INTEGER,
-      relay       TEXT NOT NULL,
-      country     TEXT,
-      city        TEXT,
-      lat         TEXT,
-      lon         TEXT,
-      ephemeral   INTEGER DEFAULT 0,
-      read_at     INTEGER,
-      pubkey      TEXT,              -- Original author pubkey
-      is_sent     INTEGER DEFAULT 0  -- 1 if sent by us, 0 if received
+    CREATE TABLE IF NOT EXISTS drifters (
+      id            TEXT PRIMARY KEY,        -- 分身的 Nostr Event ID
+      pubkey        TEXT NOT NULL,           -- 主人的公钥
+      privkey       TEXT NOT NULL,           -- 主人的私钥（本地签名用）
+      name          TEXT NOT NULL,           -- 分身名称
+      personality   TEXT NOT NULL,           -- 性格描述
+      mood          TEXT,                    -- AI从性格中提取的主情绪
+      tags          TEXT,                    -- JSON数组
+      relay         TEXT NOT NULL,           -- 出发中继站URL
+      departed_at   INTEGER NOT NULL,        -- 出发时间
+      status        TEXT DEFAULT 'roaming',  -- roaming | resting | returned | abandoned
+      abandoned_at  INTEGER,                 -- 放弃时间
+      last_seen_at  INTEGER,                 -- 最近一次被接待的时间
+      last_seen_loc TEXT                     -- 最近位置
+    );
+
+    CREATE TABLE IF NOT EXISTS feedings (
+      id              TEXT PRIMARY KEY,      -- 投喂事件的 Nostr Event ID
+      drifter_id      TEXT NOT NULL,         -- 被投喂的分身 ID
+      feeder_pubkey   TEXT NOT NULL,         -- 投喂者公钥
+      feed_type       TEXT NOT NULL,         -- story | food | place | other
+      content         TEXT NOT NULL,         -- 投喂内容
+      location_country TEXT,                 -- 投喂者位置（国家）
+      location_city    TEXT,                 -- 投喂者位置（城市）
+      fed_at          INTEGER NOT NULL,      -- 投喂时间
+      thanked_at      INTEGER,               -- 预留
+      relay           TEXT NOT NULL          -- 投喂事件所在中继站
+    );
+
+    CREATE TABLE IF NOT EXISTS hosting_log (
+      id              TEXT PRIMARY KEY,      -- 本地记录ID
+      drifter_id      TEXT NOT NULL,         -- 接待的分身 ID
+      drifter_pubkey  TEXT NOT NULL,         -- 分身主人公钥
+      drifter_name    TEXT,                  -- 分身名称
+      arrived_at      INTEGER NOT NULL,      -- 接待时间
+      feed_id         TEXT,                  -- 关联的投喂记录ID
+      sent_off_at     INTEGER                -- 送行时间
     );
 
     CREATE TABLE IF NOT EXISTS identities (
       pubkey      TEXT PRIMARY KEY,
-      privkey     TEXT NOT NULL,   -- stored encrypted by OS keychain in future
-      level       TEXT NOT NULL,
-      created_at  INTEGER NOT NULL
+      privkey     TEXT NOT NULL,
+      created_at  INTEGER NOT NULL,
+      active_drifter_id TEXT
     );
 
     CREATE TABLE IF NOT EXISTS relay_stats (
@@ -73,7 +91,6 @@ export async function initDb(): Promise<void> {
     );
   `);
 
-  // Purge expired bottles on startup
-  const now = Math.floor(Date.now() / 1000);
-  _db.prepare(`DELETE FROM bottles WHERE expires_at IS NOT NULL AND expires_at < ?`).run(now);
+  // Purge logic for drifters (e.g. clean up abandoned if needed, though doc says permanent)
+  // For now, no automatic purge like bottles.
 }

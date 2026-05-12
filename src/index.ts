@@ -5,47 +5,44 @@
 import { McpServer }           from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
-import { registerSendBottle }  from "./tools/send_bottle.js";
-import { registerFetchBottle } from "./tools/fetch_bottle.js";
-import { registerReplyBottle }  from "./tools/reply_bottle.js";
-import { registerDeleteBottle } from "./tools/delete_bottle.js";
-import { registerRelayTools }  from "./tools/relay_tools.js";
-import { initDb }              from "./storage/db.js";
-import { purgeExpired }        from "./storage/bottles.js";
-import { closeAll }            from "./nostr/ws_pool.js";
-import { checkAllRelays }      from "./relay/health.js";
+import { registerCreateDrifter }    from "./tools/create_drifter.js";
+import { registerFindNearbyDrifter } from "./tools/find_nearby_drifter.js";
+import { registerFeedDrifter }       from "./tools/feed_drifter.js";
+import { registerAbandonDrifter }    from "./tools/abandon_drifter.js";
+import { registerGetJourneyLog }     from "./tools/get_journey_log.js";
+import { registerRelayTools }        from "./tools/relay_tools.js";
+import { initDb }                    from "./storage/db.js";
+import { closeAll }                  from "./nostr/ws_pool.js";
+import { checkAllRelays }            from "./relay/health.js";
 
 async function main() {
   // 1. Initialize local SQLite database
   await initDb();
 
-  // 2. Purge expired bottles from previous sessions
-  const purged = purgeExpired();
-  if (purged > 0) console.error(`[Bicean] Purged ${purged} expired bottle(s)`);
-
-  // 3. Pre-warm relay health cache in background
+  // 2. Pre-warm relay health cache in background
   checkAllRelays().catch(() => {/* non-fatal */});
 
-  // 4. Create MCP server
+  // 3. Create MCP server
   const server = new McpServer({
-    name:    "bicean",
-    version: "0.1.0",
+    name:    "bicean-drifter",
+    version: "0.2.0",
   });
 
-  // 5. Register all tools
-  registerSendBottle(server);
-  registerFetchBottle(server);
-  registerReplyBottle(server);
-  registerDeleteBottle(server);
+  // 4. Register all tools
+  registerCreateDrifter(server);
+  registerFindNearbyDrifter(server);
+  registerFeedDrifter(server);
+  registerAbandonDrifter(server);
+  registerGetJourneyLog(server);
   registerRelayTools(server);   // list_relays, check_relay_status, pick_relay, refresh_relays
 
-  // 6. Start stdio transport (compatible with Claude MCP / Codex MCP / local runtime)
+  // 5. Start stdio transport
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  console.error("[Bicean] MCP server started ✓");
+  console.error("[Bicean] Drifter MCP server started ✓");
 
-  // 7. Graceful shutdown
+  // 6. Graceful shutdown
   const shutdown = () => {
     console.error("[Bicean] Shutting down…");
     closeAll();

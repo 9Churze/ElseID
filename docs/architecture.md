@@ -155,7 +155,7 @@ Return result to MCP client
 ## Data Flow: fetch_bottle
 
 ```
-User filter (mood?, lang?, since?, limit?)
+User filter (mood?, lang?, since?)
     │
     ▼
 buildFilter()           ← filter.ts

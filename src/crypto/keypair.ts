@@ -7,7 +7,7 @@
 import { generateSecretKey, getPublicKey } from "nostr-tools";
 import { bytesToHex, hexToBytes }           from "@noble/hashes/utils.js";
 import { getDb }                            from "../storage/db.js";
-import type { Identity, AnonymityLevel }   from "../../types/index.js";
+import type { Identity }                    from "../../types/index.js";
 
 // ── Internal helpers ─────────────────────────────────────────
 
@@ -25,114 +25,98 @@ function newKeypair(): { privkey: string; pubkey: string } {
 // ── Public API ───────────────────────────────────────────────
 
 /**
- * Create a brand-new identity and persist it to the local DB.
+ * Get the current primary identity, or create one if none exists.
  */
-export function createIdentity(level: AnonymityLevel): Identity {
-  const { privkey, pubkey } = newKeypair();
-  const identity: Identity  = { level, pubkey, privkey, createdAt: nowSec() };
+export function getPrimaryIdentity(): Identity {
+  const row = getDb().prepare(`
+    SELECT pubkey, privkey, created_at, active_drifter_id
+    FROM identities
+    LIMIT 1
+  `).get() as { pubkey: string; privkey: string; created_at: number; active_drifter_id: string | null } | undefined;
 
-  // Only persist if the level is 'persistent'. 
-  // 'full' and 'ephemeral' keys stay in memory only.
-  if (level === "persistent") {
-    getDb().prepare(`
-      INSERT OR IGNORE INTO identities (pubkey, privkey, level, created_at)
-      VALUES (?, ?, ?, ?)
-    `).run(identity.pubkey, identity.privkey, identity.level, identity.createdAt);
+  if (row) {
+    return {
+      pubkey:    row.pubkey,
+      privkey:   row.privkey,
+      createdAt: row.created_at,
+      activeDrifterId: row.active_drifter_id,
+    };
   }
+
+  // Create new
+  const { privkey, pubkey } = newKeypair();
+  const identity: Identity  = { pubkey, privkey, createdAt: nowSec(), activeDrifterId: null };
+
+  getDb().prepare(`
+    INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id)
+    VALUES (?, ?, ?, ?)
+  `).run(identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId);
 
   return identity;
 }
 
 /**
- * Load the most recent persisted identity for the given level.
+ * Set the active drifter ID for the primary identity.
  */
-export function loadIdentity(level: AnonymityLevel): Identity | null {
-  const row = getDb().prepare(`
-    SELECT pubkey, privkey, level, created_at
-    FROM identities
-    WHERE level = ?
-    ORDER BY created_at DESC
-    LIMIT 1
-  `).get(level) as { pubkey: string; privkey: string; level: string; created_at: number } | undefined;
-
-  if (!row) return null;
-  return {
-    pubkey:    row.pubkey,
-    privkey:   row.privkey,
-    level:     row.level as AnonymityLevel,
-    createdAt: row.created_at,
-  };
+export function setActiveDrifter(drifterId: string | null): void {
+  const identity = getPrimaryIdentity();
+  getDb().prepare(`
+    UPDATE identities SET active_drifter_id = ? WHERE pubkey = ?
+  `).run(drifterId, identity.pubkey);
 }
 
 /**
- * Get or create an identity according to anonymity level:
- *   full        → new ephemeral keypair every call (never persisted)
- *   ephemeral   → new keypair per first call, then reused in session
- *   persistent  → reuse the same keypair across all sessions
+ * Rotate the identity: create a brand-new primary keypair.
+ * Used when abandoning a drifter to ensure a fresh start.
  */
-export function getOrCreateIdentity(level: AnonymityLevel): Identity {
-  if (level === "full") {
-    // Fully anonymous: generate in memory, do NOT write to DB
-    const { privkey, pubkey } = newKeypair();
-    return { level, pubkey, privkey, createdAt: nowSec() };
-  }
-  return loadIdentity(level) ?? createIdentity(level);
+export function rotateIdentity(): Identity {
+  // Clear old identities to maintain "single-identity" model
+  getDb().prepare(`DELETE FROM identities`).run();
+  
+  const { privkey, pubkey } = newKeypair();
+  const identity: Identity  = { pubkey, privkey, createdAt: nowSec(), activeDrifterId: null };
+
+  getDb().prepare(`
+    INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id)
+    VALUES (?, ?, ?, ?)
+  `).run(identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId);
+
+  return identity;
 }
 
 /**
- * Delete a specific identity by pubkey.
+ * Export keypair for backup.
  */
-export function deleteIdentity(pubkey: string): void {
-  getDb().prepare(`DELETE FROM identities WHERE pubkey = ?`).run(pubkey);
+export function exportKeypair(): { pubkey: string; privkey: string } | null {
+  const identity = getPrimaryIdentity();
+  return { pubkey: identity.pubkey, privkey: identity.privkey };
 }
 
 /**
- * List all stored identities (privkey omitted for safety).
+ * Import a keypair from backup.
  */
-export function listIdentities(): Omit<Identity, "privkey">[] {
-  const rows = getDb().prepare(`
-    SELECT pubkey, level, created_at FROM identities ORDER BY created_at DESC
-  `).all() as { pubkey: string; level: string; created_at: number }[];
-
-  return rows.map((r) => ({
-    pubkey:    r.pubkey,
-    level:     r.level as AnonymityLevel,
-    createdAt: r.created_at,
-  }));
-}
-
-/**
- * Export keypair for backup. Caller must secure the output.
- */
-export function exportKeypair(pubkey: string): { pubkey: string; privkey: string } | null {
-  const row = getDb().prepare(`
-    SELECT pubkey, privkey FROM identities WHERE pubkey = ?
-  `).get(pubkey) as { pubkey: string; privkey: string } | undefined;
-
-  return row ?? null;
-}
-
-/**
- * Import a keypair from backup (raw 64-char lowercase hex privkey).
- */
-export function importKeypair(privkeyHex: string, level: AnonymityLevel): Identity {
+export function importKeypair(privkeyHex: string): Identity {
   if (!/^[0-9a-f]{64}$/i.test(privkeyHex)) {
     throw new Error("Invalid private key: must be 64-char hex");
   }
 
   const secretBytes = hexToBytes(privkeyHex.toLowerCase());
   const pubkey      = getPublicKey(secretBytes);
+  
+  // Clear old
+  getDb().prepare(`DELETE FROM identities`).run();
+
   const identity: Identity = {
-    level,
     pubkey,
     privkey: privkeyHex.toLowerCase(),
     createdAt: nowSec(),
+    activeDrifterId: null,
   };
 
   getDb().prepare(`
-    INSERT OR REPLACE INTO identities (pubkey, privkey, level, created_at)
+    INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id)
     VALUES (?, ?, ?, ?)
-  `).run(identity.pubkey, identity.privkey, identity.level, identity.createdAt);
+  `).run(identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId);
 
   return identity;
 }

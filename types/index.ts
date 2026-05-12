@@ -4,15 +4,15 @@
 
 // ── Nostr ────────────────────────────────────────────────────
 
-/** Nostr Event kind for drift bottles */
-export const DRIFT_BOTTLE_KIND = 7777 as const;
+/** Nostr Event kind for digital drifters */
+export const DRIFTER_KIND = 7777 as const;
 
 /** A signed Nostr event (kind: 7777) */
 export interface NostrEvent {
   id: string;
   pubkey: string;
   created_at: number;
-  kind: typeof DRIFT_BOTTLE_KIND;
+  kind: typeof DRIFTER_KIND;
   tags: string[][];
   content: string;
   sig: string;
@@ -22,55 +22,66 @@ export interface NostrEvent {
 export interface UnsignedEvent {
   pubkey: string;
   created_at: number;
-  kind: typeof DRIFT_BOTTLE_KIND;
+  kind: typeof DRIFTER_KIND;
   tags: string[][];
   content: string;
 }
 
-// ── Bottle ───────────────────────────────────────────────────
+// ── Drifter ──────────────────────────────────────────────────
 
-export type Mood =
-  | "lonely"
-  | "happy"
-  | "anxious"
-  | "tired"
-  | "hopeful"
-  | "confused"
-  | "calm";
+export type DrifterStatus = "roaming" | "resting" | "returned" | "abandoned";
 
-export type SupportedLang = "zh" | "en" | "ja" | "ko";
-
-export type TTLOption = 3600 | 86400 | 604800 | 0; // 1h | 24h | 7d | forever
-
-/** Input payload for creating a drift bottle */
-export interface BottleInput {
-  content: string;
-  mood?: Mood;
-  lang?: SupportedLang;
-  ttl?: TTLOption;
-  tags?: string[];
-  /** If true, encrypt content (burn-after-read mode) */
-  ephemeral?: boolean;
-  /** Target relay URL; if omitted, system picks one */
-  relay?: string;
+/** Input payload for creating a digital drifter */
+export interface DrifterInput {
+  name: string;
+  personality: string; // Amalgamated string (e.g., "like night&obsessed with coffee")
 }
 
-/** A fully resolved drift bottle (after fetching from relay) */
-export interface Bottle {
-  eventId: string;
-  content: string;
-  mood: Mood;
-  tone?: string;
-  lang: SupportedLang;
-  tags: string[];
-  ttl: TTLOption;
-  createdAt: number;
-  expiresAt: number | null;
-  relay: string;
-  location: FuzzyLocation;
-  ephemeral: boolean;
+/** A digital drifter profile */
+export interface Drifter {
+  id: string;
   pubkey: string;
-  isSent: boolean;
+  privkey: string;
+  name: string;
+  personality: string;
+  mood?: string;
+  tags: string[];
+  relay: string;
+  departedAt: number;
+  status: DrifterStatus;
+  abandonedAt?: number;
+  lastSeenAt?: number;
+  lastSeenLoc?: string;
+}
+
+// ── Feeding ──────────────────────────────────────────────────
+
+export type FeedType = "story" | "food" | "place" | "other";
+
+/** Interaction with a drifter */
+export interface Feeding {
+  id: string;
+  drifterId: string;
+  feederPubkey: string;
+  feedType: FeedType;
+  content: string;
+  locationCountry?: string;
+  locationCity?: string;
+  fedAt: number;
+  thankedAt?: number;
+  relay: string;
+}
+
+// ── Hosting ──────────────────────────────────────────────────
+
+export interface HostingLog {
+  id: string;
+  drifterId: string;
+  drifterPubkey: string;
+  drifterName?: string;
+  arrivedAt: number;
+  feedId?: string;
+  sentOffAt?: number;
 }
 
 // ── Location ─────────────────────────────────────────────────
@@ -82,16 +93,6 @@ export interface FuzzyLocation {
   /** Truncated to 1 decimal place — city-level only */
   lat: string;
   lon: string;
-}
-
-// ── Fetch filter ─────────────────────────────────────────────
-
-export interface BottleFilter {
-  mood?: Mood;
-  lang?: SupportedLang;
-  since?: number;    // unix timestamp
-  until?: number;
-  limit?: number;
 }
 
 // ── Relay ────────────────────────────────────────────────────
@@ -106,14 +107,11 @@ export interface RelayInfo {
 
 // ── Identity ─────────────────────────────────────────────────
 
-export type AnonymityLevel = "full" | "ephemeral" | "persistent";
-
 export interface Identity {
-  level: AnonymityLevel;
   pubkey: string;
-  /** private key — never transmitted */
   privkey: string;
   createdAt: number;
+  activeDrifterId: string | null;
 }
 
 // ── AI ───────────────────────────────────────────────────────
@@ -123,14 +121,7 @@ export interface ModerationResult {
   reason?: string;
 }
 
-export interface EmotionResult {
-  mood: Mood;
-  tone: string;
+export interface PersonalityAnalysis {
+  mood: string;
   tags: string[];
-  confidence: number;
-}
-
-export interface MatchScore {
-  eventId: string;
-  score: number;
 }

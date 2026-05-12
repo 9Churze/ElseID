@@ -53,14 +53,14 @@ export function registerRelayTools(server: McpServer) {
   // ── pick_relay ──────────────────────────────────────────────
   server.tool(
     "pick_relay",
-    "Let the system pick the best available relay for your next send_bottle call.",
+    "Let the system pick the best available relay for your next create_drifter call.",
     {},
     async () => {
       const url = pickRelay();
       return {
         content: [{
           type: "text",
-          text: `🎯 Best relay selected: ${url}\n\nYou can pass this as the relay parameter in send_bottle.`,
+          text: `🎯 Best relay selected: ${url}\n\nYou can pass this as the relay parameter in create_drifter.`,
         }],
       };
     }

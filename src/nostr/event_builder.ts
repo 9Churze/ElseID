@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — src/nostr/event_builder.ts
+// ElseID — src/nostr/event_builder.ts
 // Constructs kind:7777 unsigned Nostr events for digital drifters.
 // ============================================================
 
@@ -29,7 +29,7 @@ export function buildDrifterEvent(opts: DrifterBuildOptions): UnsignedEvent {
     ["type",        "drifter"],
     ["name",        name],
     ["personality", personality],
-    ["mood",        analysis.mood],
+    ["trait",       analysis.trait],
   ];
 
   for (const t of analysis.tags) {

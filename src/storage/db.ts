@@ -42,7 +42,7 @@ export async function initDb(): Promise<void> {
       privkey       TEXT NOT NULL,           -- 主人的私钥（本地签名用）
       name          TEXT NOT NULL,           -- 分身名称
       personality   TEXT NOT NULL,           -- 性格描述
-      mood          TEXT,                    -- AI从性格中提取的主情绪
+      trait         TEXT,                    -- AI从性格中提取的核心特征
       tags          TEXT,                    -- JSON数组
       relay         TEXT NOT NULL,           -- 出发中继站URL
       departed_at   INTEGER NOT NULL,        -- 出发时间

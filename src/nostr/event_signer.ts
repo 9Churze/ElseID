@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — src/nostr/event_signer.ts
+// ElseID — src/nostr/event_signer.ts
 // Signs unsigned Nostr events locally using secp256k1 Schnorr.
 // No private key ever leaves the local process.
 // ============================================================

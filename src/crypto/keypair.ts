@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — src/crypto/keypair.ts
+// ElseID — src/crypto/keypair.ts
 // secp256k1 keypair generation, local storage, identity mgmt.
 // Private keys are stored ONLY on the local device.
 // ============================================================

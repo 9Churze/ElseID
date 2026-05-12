@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — src/nostr/ws_pool.ts
+// ElseID — src/nostr/ws_pool.ts
 // WebSocket connection pool. Manages relay connections and
 // handles REQ/EOSE/EVENT/CLOSE Nostr protocol messages.
 // ============================================================

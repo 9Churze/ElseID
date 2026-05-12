@@ -9,7 +9,7 @@ import { getFuzzyLocation } from "../location/geo.js";
 import { buildDrifterFilter } from "../nostr/filter.js";
 import { subscribeMany } from "../nostr/ws_pool.js";
 import { pickRelaysForFetch } from "../relay/selector.js";
-import { hasHostedBefore, saveOutgoingFeeding } from "../storage/drifters.ts";
+import { hasHostedBefore, saveOutgoingFeeding } from "../storage/drifters.js";
 import { getTag, getAllTags } from "../nostr/event_builder.js";
 import { getPrimaryIdentity } from "../storage/identity.js";
 import type { FuzzyLocation } from "../../types/index.js";

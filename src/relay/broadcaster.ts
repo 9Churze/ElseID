@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — src/relay/broadcaster.ts
+// ElseID — src/relay/broadcaster.ts
 // Broadcasts a signed Nostr event to a single relay via
 // WebSocket. Retries on transient failures with backoff.
 // ============================================================

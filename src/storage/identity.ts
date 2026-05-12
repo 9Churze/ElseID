@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — src/storage/identity.ts
+// ElseID — src/storage/identity.ts
 // Identity management layer for Digital Drifters.
 // ============================================================
 

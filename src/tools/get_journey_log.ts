@@ -6,7 +6,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { buildFeedingFilter } from "../nostr/filter.js";
 import { subscribeMany } from "../nostr/ws_pool.js";
-import { getMyActiveDrifter, saveIncomingFeeding, getMyDrifterJourney } from "../storage/drifters.ts";
+import { getMyActiveDrifter, saveIncomingFeeding, getMyDrifterJourney } from "../storage/drifters.js";
 import { getTag } from "../nostr/event_builder.js";
 
 export function registerGetJourneyLog(server: McpServer) {

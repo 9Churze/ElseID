@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — src/tools/relay_tools.ts
+// ElseID — src/tools/relay_tools.ts
 // MCP Tools: list_relays, check_relay_status, pick_relay
 // ============================================================
 

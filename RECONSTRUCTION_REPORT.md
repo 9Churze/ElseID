@@ -6,9 +6,9 @@
 
 | 维度 | 旧逻辑 (Drift Bottle) | 新隐喻 (ElseID) | 底层实现 (Implementation) |
 | :--- | :--- | :--- | :--- |
-| **发送单元** | 一条消息 (Kind 7777) | 一个数字分身 (Kind 7777 + `type:drifter`) | 从纯文本内容转变为包含 `name`, `personality` 的结构化身份。 |
+| **发送单元** | 一条消息 (Kind 7777) | 一个数字分身 (Kind 7777 + `type:drifter`) | 从纯文本转变为包含 `name`, `personality` 的结构化身份，由 Butler 预先解析特质。 |
 | **发送频率** | 无限制，阅后即焚 | 同时只有一个分身在外 (稀缺性) | 在 `identities` 表中增加 `active_drifter_id` 约束，创建前检查唯一性。 |
-| **身份建模** | 匿名等级 (full/ephemeral/persistent) | 唯一分身 (人格化) | 废弃多身份等级，统一使用本地生成的单主身份，通过 `analyzePersonality` 提取性格。 |
+| **身份建模** | 匿名等级 (full/ephemeral/persistent) | 唯一分身 (人格化) | 废弃多身份等级，统一使用本地生成的单主身份，由 Butler 塑造身份。 |
 | **地理逻辑** | 仅记录发送位置 (coarse location) | 地理邻近接待 (流浪感) | 重构 `Relay Selector`，根据用户当前地理位置匹配最接近的中继站。 |
 | **互动方式** | 文本回复 (`reply_bottle`) | 投喂故事/声音/经验 (`feed_drifter`) | 新增 `feed_type` 标签，区分不同的互动类型，并记录在 `feedings` 表中。 |
 | **生命周期** | TTL 自动过期 / 召回消息 | 永恒流浪 / 放弃分身 (重生) | 移除 TTL 限制。`abandon_drifter` 通过 NIP-09 删除云端事件，并本地更新状态。 |
@@ -31,7 +31,7 @@
 
 ## 4. 移除与优化的组件
 
-- **移除**: `analyzeEmotion` (改为性格分析), `detectLanguage` (不再作为筛选核心), `matcher.ts` (改为地理匹配)。
+- **移除**: `analyzeEmotion` (改为性格分析), `detectLanguage` (不再作为筛选核心), `matcher.ts` (改为地理匹配), `intelligence.ts` (逻辑移交给 AI Butler)。
 - **保留**: `secp256k1` 本地签名、位置模糊化（隐私保护）、NIP-09 协议兼容性。
 
 ---

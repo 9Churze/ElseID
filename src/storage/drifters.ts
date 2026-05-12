@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — src/storage/drifters.ts
+// ElseID — src/storage/drifters.ts
 // Local SQLite CRUD for digital drifters and feedings.
 // ============================================================
 
@@ -14,7 +14,7 @@ import type { Drifter, Feeding, HostingLog, DrifterStatus, FeedType } from "../.
 export function saveMyDrifter(drifter: Drifter): void {
   getDb().prepare(`
     INSERT INTO drifters (
-      id, pubkey, privkey, name, personality, mood, tags,
+      id, pubkey, privkey, name, personality, trait, tags,
       relay, departed_at, status
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
@@ -23,7 +23,7 @@ export function saveMyDrifter(drifter: Drifter): void {
     drifter.privkey,
     drifter.name,
     drifter.personality,
-    drifter.mood ?? null,
+    drifter.trait ?? null,
     JSON.stringify(drifter.tags),
     drifter.relay,
     drifter.departedAt,
@@ -140,7 +140,7 @@ function rowToDrifter(row: any): Drifter {
     privkey:     row.privkey,
     name:        row.name,
     personality: row.personality,
-    mood:        row.mood ?? undefined,
+    trait:       row.trait ?? undefined,
     tags:        JSON.parse(row.tags ?? "[]"),
     relay:       row.relay,
     departedAt:  row.departed_at,

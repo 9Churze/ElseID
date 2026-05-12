@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — src/relay/selector.ts
+// ElseID — src/relay/selector.ts
 // Geographic-prioritized relay selection strategy.
 // ============================================================
 

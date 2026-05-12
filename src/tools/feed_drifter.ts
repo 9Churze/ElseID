@@ -11,7 +11,7 @@ import { buildFeedingEvent } from "../nostr/event_builder.js";
 import { signEvent } from "../nostr/event_signer.js";
 import { pickRelay } from "../relay/selector.js";
 import { broadcast } from "../relay/broadcaster.js";
-import { saveOutgoingFeeding } from "../storage/drifters.ts";
+import { saveOutgoingFeeding } from "../storage/drifters.js";
 import { checkContent } from "../ai/moderator.js";
 
 const schema = z.object({

@@ -1,6 +1,6 @@
 // ============================================================
-// Bicean — src/tools/abandon_drifter.ts
-// MCP Tool: Abandon the current drifter and start fresh.
+// ElseID — src/tools/abandon_drifter.ts
+// MCP Tool: Abandon the current ElseID and start fresh.
 // ============================================================
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -9,7 +9,7 @@ import { getPrimaryIdentity, setActiveDrifter, rotateIdentity } from "../storage
 import { buildDeletionEvent } from "../nostr/event_builder.js";
 import { signEvent } from "../nostr/event_signer.js";
 import { broadcast } from "../relay/broadcaster.js";
-import { getMyActiveDrifter, updateDrifterStatus } from "../storage/drifters.ts";
+import { getMyActiveDrifter, updateDrifterStatus } from "../storage/drifters.js";
 
 const schema = z.object({
   confirm: z.boolean().describe("Must be true to confirm abandonment"),

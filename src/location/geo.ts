@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — src/location/geo.ts
+// ElseID — src/location/geo.ts
 // IP → coarse city-level FuzzyLocation.
 // Precision is intentionally limited to protect user privacy.
 // ============================================================

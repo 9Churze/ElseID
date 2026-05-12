@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — src/crypto/encrypt.ts
+// ElseID — src/crypto/encrypt.ts
 // NIP-04 compatible encryption for burn-after-read bottles.
 // Uses AES-256-CBC with ECDH shared secret (secp256k1).
 // ============================================================

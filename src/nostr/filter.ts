@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — src/nostr/filter.ts
+// ElseID — src/nostr/filter.ts
 // Builds Nostr REQ subscription filters for drifters and feedings.
 // ============================================================
 

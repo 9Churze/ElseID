@@ -44,7 +44,7 @@ export interface Drifter {
   privkey: string;
   name: string;
   personality: string;
-  mood?: string;
+  trait?: string;
   tags: string[];
   relay: string;
   departedAt: number;
@@ -122,6 +122,6 @@ export interface ModerationResult {
 }
 
 export interface PersonalityAnalysis {
-  mood: string;
+  trait: string;
   tags: string[];
 }

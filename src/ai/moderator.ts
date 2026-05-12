@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — src/ai/moderator.ts
+// ElseID — src/ai/moderator.ts
 // Local content moderation.
 // Blocks illegal/harmful content based on COMPLIANCE.md rules.
 // ============================================================

@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — src/relay/health.ts
+// ElseID — src/relay/health.ts
 // Relay health checks: online status, latency, writability.
 // Persists results to relay_stats table for use by selector.
 // ============================================================

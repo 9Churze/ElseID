@@ -10,6 +10,7 @@ import {
   exportKeypair,
   importKeypair,
 } from "../crypto/keypair.js";
+import { getDb } from "./db.js";
 
 /**
  * Get the current active drifter ID for the primary identity.

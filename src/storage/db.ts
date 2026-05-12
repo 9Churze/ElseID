@@ -39,7 +39,6 @@ export async function initDb(): Promise<void> {
     CREATE TABLE IF NOT EXISTS drifters (
       id            TEXT PRIMARY KEY,        -- 分身的 Nostr Event ID
       pubkey        TEXT NOT NULL,           -- 主人的公钥
-      privkey       TEXT NOT NULL,           -- 主人的私钥（本地签名用）
       name          TEXT NOT NULL,           -- 分身名称
       personality   TEXT NOT NULL,           -- 性格描述
       trait         TEXT,                    -- AI从性格中提取的核心特征

@@ -41,7 +41,8 @@ export interface DrifterInput {
 export interface Drifter {
   id: string;
   pubkey: string;
-  privkey: string;
+  /** @deprecated Private key is now stored exclusively in the identities table. */
+  privkey?: string;
   name: string;
   personality: string;
   trait?: string;

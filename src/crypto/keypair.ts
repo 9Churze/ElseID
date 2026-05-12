@@ -68,11 +68,20 @@ export function setActiveDrifter(drifterId: string | null): void {
 /**
  * Rotate the identity: create a brand-new primary keypair.
  * Used when abandoning a drifter to ensure a fresh start.
+ *
+ * Security: before deletion, the old private key is overwritten with
+ * cryptographically random bytes.  This makes WAL-based recovery of
+ * the original key significantly harder.
  */
 export function rotateIdentity(): Identity {
-  // Clear old identities to maintain "single-identity" model
+  // ── Step 1: Shred the old private key in-place ──────────────
+  const scrub = bytesToHex(generateSecretKey()); // 64 random hex chars
+  getDb().prepare(`UPDATE identities SET privkey = ?`).run(scrub);
+
+  // ── Step 2: Delete the now-worthless row ─────────────────────
   getDb().prepare(`DELETE FROM identities`).run();
-  
+
+  // ── Step 3: Insert fresh identity ───────────────────────────
   const { privkey, pubkey } = newKeypair();
   const identity: Identity  = { pubkey, privkey, createdAt: nowSec(), activeDrifterId: null };
 
@@ -80,6 +89,9 @@ export function rotateIdentity(): Identity {
     INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id)
     VALUES (?, ?, ?, ?)
   `).run(identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId);
+
+  // ── Step 4: Checkpoint WAL to collapse overwrite into main DB
+  try { getDb().pragma("wal_checkpoint(TRUNCATE)"); } catch { /* non-fatal */ }
 
   return identity;
 }

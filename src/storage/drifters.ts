@@ -14,13 +14,12 @@ import type { Drifter, Feeding, HostingLog, DrifterStatus, FeedType } from "../.
 export function saveMyDrifter(drifter: Drifter): void {
   getDb().prepare(`
     INSERT INTO drifters (
-      id, pubkey, privkey, name, personality, trait, tags,
+      id, pubkey, name, personality, trait, tags,
       relay, departed_at, status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     drifter.id,
     drifter.pubkey,
-    drifter.privkey,
     drifter.name,
     drifter.personality,
     drifter.trait ?? null,
@@ -149,7 +148,6 @@ function rowToDrifter(row: any): Drifter {
   return {
     id:          row.id,
     pubkey:      row.pubkey,
-    privkey:     row.privkey,
     name:        row.name,
     personality: row.personality,
     trait:       row.trait ?? undefined,

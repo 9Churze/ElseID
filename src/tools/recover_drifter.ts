@@ -54,17 +54,12 @@ export function registerRecoverDrifter(server: McpServer) {
       const picked = orphaned[0];
       const event = picked.event;
 
-      if (input.drifter_id && input.drifter_id !== event.id) {
-         // User requested specific but we found others
-      }
-
       // If we don't have it in local DB, reconstruct it
       const local = getDrifter(event.id);
       if (!local) {
         saveMyDrifter({
           id: event.id,
           pubkey: event.pubkey,
-          privkey: identity.privkey, // We still have the master privkey
           name: getTag(event.tags, "name") || "寻回的分身",
           personality: getTag(event.tags, "personality") || event.content,
           trait: getTag(event.tags, "trait") || "未知",

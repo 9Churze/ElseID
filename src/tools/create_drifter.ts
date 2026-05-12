@@ -68,7 +68,6 @@ export function registerCreateDrifter(server: McpServer) {
         saveMyDrifter({
           id: signed.id,
           pubkey: signed.pubkey,
-          privkey: identity.privkey,
           name: input.name,
           personality: input.personality,
           trait: input.trait,

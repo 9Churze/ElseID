@@ -8,7 +8,15 @@
 
 ### 一、内容审核机制
 
-ElseID 在客户端内置了基于 Claude AI 的内容审核模块（`src/ai/moderator.ts`），在每条流浪信息发送前自动执行审核。
+ElseID 以 **MCP（Model Context Protocol）服务** 的形式运行于 Claude Desktop、Codex 等 AI 客户端之中。
+
+内容安全由**两层机制**共同保障：
+
+**第一层：AI 客户端原生安全策略（主防护）**
+用户的所有输入在到达 ElseID 工具之前，已由宿主 AI（Claude / Codex 等）依据其自身安全策略进行过滤。ElseID 依赖并信任该层防护。
+
+**第二层：本地规则引擎（补充防护）**
+`src/ai/moderator.ts` 提供基于正则表达式与关键词的本地过滤，重点拦截联系方式、URL 等结构化违规内容，作为客户端过滤层的补充兜底。
 
 **默认拦截以下内容：**
 
@@ -77,7 +85,15 @@ ElseID 在客户端内置了基于 Claude AI 的内容审核模块（`src/ai/mod
 
 ### 1. Content Moderation System
 
-Bicean includes a built-in AI-powered content moderation module (`src/ai/moderator.ts`) that automatically reviews every message before it is broadcast to the Nostr network.
+ElseID runs as an **MCP (Model Context Protocol) server** within AI clients such as Claude Desktop and Codex.
+
+Content safety is enforced through **two complementary layers**:
+
+**Layer 1: AI Client Native Safety Policy (Primary)**
+All user input passes through the host AI's (Claude / Codex / etc.) built-in safety policies before reaching any ElseID tool. ElseID relies on and trusts this layer as the primary content filter.
+
+**Layer 2: Local Rule Engine (Secondary)**
+`src/ai/moderator.ts` provides a lightweight, local filter based on regex patterns and keyword blocklists. It focuses on structured violations such as contact information and URLs, serving as a fallback safety net.
 
 **The following content is blocked by default:**
 

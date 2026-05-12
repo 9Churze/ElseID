@@ -42,10 +42,14 @@ export function registerAbandonDrifter(server: McpServer) {
       const signedDeletion = signEvent(deletionEvent, identity.privkey);
       await broadcast(signedDeletion, drifter.relay);
 
-      // 2. Update local storage
+      // 2. Update local storage: mark drifter as abandoned
       updateDrifterStatus(drifter.id, "abandoned", Math.floor(Date.now() / 1000));
-      
-      // 3. Rotate identity (fresh start)
+
+      // 3. Explicitly clear active_drifter_id before rotation to close the
+      //    timing window where getMyActiveDrifter() could still resolve.
+      setActiveDrifter(null);
+
+      // 4. Rotate identity (fresh start + key shredding)
       rotateIdentity();
 
       return {

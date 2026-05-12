@@ -4,15 +4,13 @@
 // ============================================================
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { z } from "zod";
 import { getFuzzyLocation } from "../location/geo.js";
 import { buildDrifterFilter } from "../nostr/filter.js";
 import { subscribeMany } from "../nostr/ws_pool.js";
 import { pickRelaysForFetch } from "../relay/selector.js";
-import { hasHostedBefore, saveOutgoingFeeding } from "../storage/drifters.js";
-import { getTag, getAllTags } from "../nostr/event_builder.js";
+import { hasHostedBefore } from "../storage/drifters.js";
+import { getTag } from "../nostr/event_builder.js";
 import { getPrimaryIdentity } from "../storage/identity.js";
-import type { FuzzyLocation } from "../../types/index.js";
 
 export function registerFindNearbyDrifter(server: McpServer) {
   server.tool(
@@ -50,24 +48,30 @@ export function registerFindNearbyDrifter(server: McpServer) {
       const personality = getTag(event.tags, "personality") || "未知";
       const origin = [getTag(event.tags, "city"), getTag(event.tags, "country")].filter(Boolean).join(", ") || "世界角落";
 
-      return {
-        content: [{
+      // S-04 fix: Convey isFamiliar via a structured metadata block rather than
+      // prepending a raw tag string that may leak to the user-facing output.
+      const contentItems: Array<{ type: "text"; text: string }> = [
+        {
           type: "text",
-          text: (isFamiliar ? "[FAMILIAR_FACE] " : "") +
-                `🛰️ 检测到附近存在流浪信号。打捞成功！\n\n` +
-                `「${name}」\n` +
-                `📍 来源: ${origin}\n` +
-                `🏷️ 人格标签: ${personality}\n` +
-                `💬 心声: "${event.content}"\n\n` +
-                `它正在你的终端短暂停留。你愿意为它留下一点关于这个世界的东西吗？\n\n` +
-                (isFamiliar ? `（它似乎和你有些缘分，这已经不是你们第一次遇见了。）\n\n` : "") +
-                `你可以进行以下投喂：\n` +
-                `- [A] 留下一段话 (feed_drifter type="story")\n` +
-                `- [B] 分享声音或美食 (feed_drifter type="food")\n` +
-                `- [C] 推荐一个地方 (feed_drifter type="place")\n` +
-                `- [D] 分享自己的生活经验 (feed_drifter type="other")`
-        }],
-      };
+          text: JSON.stringify({ _meta: "elseid", isFamiliar, drifterId: event.id, relay: picked.relay }),
+        },
+        {
+          type: "text",
+          text: `🛰️ 检测到附近存在流浪信号。打捞成功！\n\n` +
+               `「${name}」\n` +
+               `📍 来源: ${origin}\n` +
+               `🏷️ 人格标签: ${personality}\n` +
+               `💬 心声: "${event.content}"\n\n` +
+               `它正在你的终端短暂停留。你愿意为它留下一点关于这个世界的东西吗？\n\n` +
+               `你可以进行以下投喂：\n` +
+               `- [A] 留下一段话 (feed_drifter type="story")\n` +
+               `- [B] 分享声音或美食 (feed_drifter type="food")\n` +
+               `- [C] 推荐一个地方 (feed_drifter type="place")\n` +
+               `- [D] 分享自己的生活经验 (feed_drifter type="other")`,
+        },
+      ];
+
+      return { content: contentItems };
     }
   );
 }

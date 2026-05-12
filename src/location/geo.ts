@@ -26,7 +26,7 @@ interface GeoApiResponse {
  */
 export async function getFuzzyLocation(): Promise<FuzzyLocation> {
   try {
-    const res = await fetch("http://ip-api.com/json/?fields=status,country,countryCode,city,lat,lon,query", {
+    const res = await fetch("https://ip-api.com/json/?fields=status,country,countryCode,city,lat,lon,query", {
       signal: AbortSignal.timeout(4_000),
     });
 

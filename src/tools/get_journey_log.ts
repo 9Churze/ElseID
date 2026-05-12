@@ -18,8 +18,7 @@ export function registerGetJourneyLog(server: McpServer) {
       const drifter = getMyActiveDrifter();
       if (!drifter) {
         return {
-          content: [{ type: "text", text: "❌ 你目前没有正在流浪的 ElseID。请先让它出发。" }],
-          isError: true,
+          content: [{ type: "text", text: "🌌 你的分身还没有出发。告诉管家你想创建一个什么样的它，让它去流浪吧。" }],
         };
       }
 
@@ -49,7 +48,7 @@ export function registerGetJourneyLog(server: McpServer) {
       let report = `已收到「${drifter.name}」的最新旅程记录（离岸 ${ageDays} 天）：\n\n`;
 
       if (localJourney.length === 0) {
-        report += "📍 初始中继站: " + drifter.relay + "\n";
+        report += "📍 初始信号站: " + (drifter.relay.includes("//") ? drifter.relay.split("//")[1].split("/")[0] : "未知") + "\n";
         report += "🌊 当前状态: 正在寻找第一个愿意接待它的人。\n";
       } else {
         const latest = localJourney[0];

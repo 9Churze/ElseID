@@ -30,12 +30,25 @@ export async function checkContent(content: string): Promise<ModerationResult> {
     }
   }
 
-  // 2. Prohibited keywords (Basic blocklist)
-  // In a real app, this would be more extensive or use a local small model.
+  // 2. Prohibited keyword blocklist (secondary fallback layer)
+  // Primary filtering is done by the AI client (Claude/Codex). This layer
+  // catches structured patterns and common obfuscations.
   const blockList = [
-    "porn", "sexual", "nude", "violence", "threat", "kill", "suicide",
-    "advertise", "promo", "buy", "sell", "discount",
-    "色情", "淫秽", "暴力", "威胁", "自杀", "广告", "推销", "联系方式"
+    // Sexual content
+    "porn", "porno", "pornographic", "sexual", "nude", "nudity", "nsfw",
+    "色情", "淫秽", "成人内容", "裸体",
+    // Violence
+    "violence", "violent", "threat", "threaten", "kill", "murder", "rape",
+    "暴力", "威胁", "杀人", "强奸",
+    // Self-harm
+    "suicide", "self-harm", "自杀", "自残",
+    // Spam & promotion
+    "advertise", "advertisement", "promo", "promotion", "buy now", "sell",
+    "discount", "free trial", "click here", "limited offer",
+    "广告", "推销", "优惠", "买卖", "代购", "兼职", "招募",
+    // Hate speech markers (simplified — AI client handles nuance)
+    "hate speech", "racist", "sexist",
+    "仇恨", "歧视",
   ];
 
   for (const word of blockList) {

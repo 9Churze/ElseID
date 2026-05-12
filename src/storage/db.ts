@@ -94,4 +94,18 @@ export async function initDb(): Promise<void> {
 
   // Purge logic for drifters (e.g. clean up abandoned if needed, though doc says permanent)
   // For now, no automatic purge like bottles.
+
+  // E-03: Schema migration — safely add columns that may not exist in older DBs.
+  // ALTER TABLE ignores errors if the column already exists via the try/catch pattern.
+  const migrations: string[] = [
+    `ALTER TABLE identities ADD COLUMN is_creating INTEGER DEFAULT 0`,
+  ];
+  for (const sql of migrations) {
+    try { _db.prepare(sql).run(); } catch { /* column already exists — safe to ignore */ }
+  }
+
+  // S-02 fix: Reset any stale creation lock that may have been left behind by a
+  // previous crash.  The lock is only meaningful within a single server session,
+  // so it must always be cleared on startup.
+  _db.prepare(`UPDATE identities SET is_creating = 0 WHERE is_creating = 1`).run();
 }

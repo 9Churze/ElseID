@@ -66,7 +66,7 @@ export function registerFindNearbyDrifter(server: McpServer) {
       return {
         content: [{
           type: "text",
-          text: `🛰️ 检测到附近存在漂流信号。打捞成功！\n\n` +
+          text: `🛰️ 检测到附近存在流浪信号。打捞成功！\n\n` +
                 `「${name}」\n` +
                 `📍 来源: ${origin}\n` +
                 `🏷️ 人格标签: ${personality}\n` +

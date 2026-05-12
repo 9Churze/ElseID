@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — Default Relay Configuration
+// ElseID — Default Relay Configuration
 // ============================================================
 
 export interface RelayConfig {

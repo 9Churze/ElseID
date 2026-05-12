@@ -8,6 +8,8 @@ build/
 .DS_Store
 *.tgz
 coverage/
+.elseid_test/
+.elseid_temp/
 .bicean_test/
 .bicean_temp/
 
@@ -24,8 +26,11 @@ coverage/
 .vscode/
 .idea/
 
-# Bicean Specific
+# ElseID Specific
+.elseid/
+.elseid_data/
 .bicean_data/
 
 # Generated reports
 docs/*_report.md
+RECONSTRUCTION_REPORT.md

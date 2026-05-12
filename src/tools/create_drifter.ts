@@ -77,7 +77,7 @@ export function registerCreateDrifter(server: McpServer) {
       return {
         content: [{
           type: "text",
-          text: `🚀 ElseID 创建成功！\n\n「${input.name}」已离岸，正在进入漂流网络…\n\n` +
+          text: `🚀 ElseID 创建成功！\n\n「${input.name}」已离岸，正在进入流浪网络…\n\n` +
                 `📍 初始中继站: ${relayUrl}\n` +
                 `🌊 当前状态: 正在寻找第一个愿意接待它的人。`
         }],

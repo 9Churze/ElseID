@@ -8,7 +8,7 @@
 
 ### 一、内容审核机制
 
-Bicean 在客户端内置了基于 Claude AI 的内容审核模块（`src/ai/moderator.ts`），在每条漂流瓶发送前自动执行审核。
+ElseID 在客户端内置了基于 Claude AI 的内容审核模块（`src/ai/moderator.ts`），在每条流浪信息发送前自动执行审核。
 
 **默认拦截以下内容：**
 

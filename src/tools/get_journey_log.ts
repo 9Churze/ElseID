@@ -56,7 +56,7 @@ export function registerGetJourneyLog(server: McpServer) {
         const latestLoc = [latest.locationCity, latest.locationCountry].filter(Boolean).join(" · ") || "未知地点";
         report += `📍 当前位置: ${latestLoc}\n`;
         report += `📝 最新见闻: "${latest.content}"\n`;
-        report += `🌊 当前状态: 正在继续漂流中。\n\n`;
+        report += `🌊 当前状态: 正在继续流浪中。\n\n`;
         report += `--- 完整 Journey Log ---\n`;
         
         for (const f of localJourney) {

@@ -72,7 +72,7 @@ export function registerFeedDrifter(server: McpServer) {
         content: [{
           type: "text",
           text: `🍱 投喂完成。\n\n你分享的内容已经写入对方的 Journey Log。\n` +
-                `它将在下一次漂流时，带着你的善意继续前行。\n\n` +
+                `它将在下一次流浪时，带着你的善意继续前行。\n\n` +
                 `感谢你愿意接待一个陌生人的另一种人生。`
         }],
       };

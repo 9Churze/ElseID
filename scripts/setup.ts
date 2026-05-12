@@ -1,5 +1,5 @@
 // ============================================================
-// Bicean — scripts/setup.ts
+// ElseID — scripts/setup.ts
 // 自动化安装与 MCP 配置文件注入脚本 (Zero-Config 版)
 // ============================================================
 
@@ -14,7 +14,7 @@ const CONFIG_PATH = path.join(
 );
 
 async function setup() {
-  console.log("🌊 正在准备 Bicean 信号连接器 (Zero-Config)...");
+  console.log("🌊 正在准备 ElseID 信号连接器 (Zero-Config)...");
 
   const projectDir = process.cwd();
 
@@ -38,7 +38,7 @@ async function setup() {
       
       if (!config.mcpServers) config.mcpServers = {};
       
-      config.mcpServers.bicean = {
+      config.mcpServers.elseid = {
         command: "node",
         args: [
           "--import",
@@ -54,11 +54,11 @@ async function setup() {
     }
   }
 
-  console.log("\n🎉 Bicean 环境准备就绪！不需要任何 API Key 即可运行。");
+  console.log("\n🎉 ElseID 环境准备就绪！不需要任何 API Key 即可运行。");
   console.log("请完全退出并重启 Claude Desktop，然后对 AI 说：");
   console.log(
     "\x1b[36m%s\x1b[0m",
-    "“你好，调频员，请帮我检查当前的二进制海信号状态。”"
+    "“你好管家，我想创建一个 ElseID 分身。”"
   );
 }
 

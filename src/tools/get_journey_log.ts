@@ -12,13 +12,13 @@ import { getTag } from "../nostr/event_builder.js";
 export function registerGetJourneyLog(server: McpServer) {
   server.tool(
     "get_journey_log",
-    "查询你的 ElseID 分身的近况与完整流浪轨迹。",
+    "Query the current status and travel log of your active ElseID drifter.",
     {},
     async () => {
       const drifter = getMyActiveDrifter();
       if (!drifter) {
         return {
-          content: [{ type: "text", text: "🌌 你的分身还没有出发。告诉管家你想创建一个什么样的它，让它去流浪吧。" }],
+          content: [{ type: "text", text: "🌌 Your drifter hasn't set sail yet. Tell the Butler what kind of drifter you want to create and let it wander." }],
         };
       }
 
@@ -45,23 +45,23 @@ export function registerGetJourneyLog(server: McpServer) {
 
       const ageDays = Math.floor((Date.now() / 1000 - drifter.departedAt) / 86400);
       
-      let report = `已收到「${drifter.name}」的最新旅程记录（离岸 ${ageDays} 天）：\n\n`;
+      let report = `Latest journey records received for 「${drifter.name}」 (${ageDays} days at sea):\n\n`;
 
       if (localJourney.length === 0) {
-        report += "📍 初始信号站: " + (drifter.relay.includes("//") ? drifter.relay.split("//")[1].split("/")[0] : "未知") + "\n";
-        report += "🌊 当前状态: 正在寻找第一个愿意接待它的人。\n";
+        report += "📍 Origin Station: " + (drifter.relay.includes("//") ? drifter.relay.split("//")[1].split("/")[0] : "Unknown") + "\n";
+        report += "🌊 Current Status: Looking for the first person to host it.\n";
       } else {
         const latest = localJourney[0];
-        const latestLoc = [latest.locationCity, latest.locationCountry].filter(Boolean).join(" · ") || "未知地点";
-        report += `📍 当前位置: ${latestLoc}\n`;
-        report += `📝 最新见闻: "${latest.content}"\n`;
-        report += `🌊 当前状态: 正在继续流浪中。\n\n`;
-        report += `--- 完整 Journey Log ---\n`;
+        const latestLoc = [latest.locationCity, latest.locationCountry].filter(Boolean).join(" · ") || "Unknown Location";
+        report += `📍 Current Location: ${latestLoc}\n`;
+        report += `📝 Latest Encounter: "${latest.content}"\n`;
+        report += `🌊 Current Status: Continuing the journey.\n\n`;
+        report += `--- Complete Journey Log ---\n`;
         
         for (const f of localJourney) {
-          const location = [f.locationCity, f.locationCountry].filter(Boolean).join(" · ") || "未知";
+          const location = [f.locationCity, f.locationCountry].filter(Boolean).join(" · ") || "Unknown";
           const date = new Date(f.fedAt * 1000).toLocaleDateString();
-          report += `[${date}] ${location}: 有位 Host 分享了 ${f.feedType} -> "${f.content}"\n`;
+          report += `[${date}] ${location}: A Host shared ${f.feedType} -> "${f.content}"\n`;
         }
       }
 

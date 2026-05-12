@@ -1,135 +1,135 @@
 # ElseID 🛸
 
-> **"释放另一个你，去流浪，去被这世界温柔对待。"**
+> **"Release another you. Let it wander, and let the world treat it with kindness."**
 
-ElseID 让你创建一个数字分身，带着你给它的性格，漂流到世界各地。
-陌生人会接待它、给它讲故事、请它吃饭、告诉它当地好玩的地方。
-你随时可以查看它的旅途，看看它在哪里、遇见了谁、收到了什么。
+[English](README.md) | [简体中文](docs/README_zh.md) | [日本語](docs/README_ja.md) | [한국어](docs/README_ko.md)
 
-**每人同时只能有一个分身在路上。**
-不需要注册账号，不需要服务器，你的数据只存在你自己的电脑里。
+ElseID lets you create a **digital drifter** — a personality-rich alter ego that wanders across a decentralized network. Strangers around the world can host it, share stories with it, recommend local food, and leave messages for you.
+
+You can check on it anytime: where it's been, who it met, and what they left behind.
+
+**One drifter per person, at any time.**
+No account needed. No server. Your data lives only on your own machine.
 
 ---
 
-## 🚀 开始使用
+## 🚀 Quick Start
 
-### 第一步：安装
+### Step 1 — Install
 
-确保电脑已安装 [Node.js](https://nodejs.org/)（v18 或以上版本），然后在项目目录运行：
+Make sure you have [Node.js](https://nodejs.org/) v18 or later, then run:
 
 ```bash
 npm run setup
 ```
 
-### 第二步：配置管家
+### Step 2 — Configure the Butler
 
-打开你的 AI 客户端（Claude Desktop 等），进入**系统设置**或**自定义指令**，
-把 `docs/system_prompt.md` 里的内容完整粘贴进去，保存。
+Open your AI client (Claude Desktop, Codex, etc.) and go to **System Prompt** or **Custom Instructions**.
+Paste the full contents of `docs/system_prompt.md` and save.
 
-### 第三步：开始
+### Step 3 — Start
 
-重启 AI 客户端，然后直接说：
+Restart your AI client, then just say:
 
-> "我想创建一个分身。"
+> "I want to create a drifter."
 
-管家会引导你完成剩下的一切。
-
----
-
-## 💡 你能做什么
-
-### 放出你的分身
-
-告诉管家，你的分身是个什么样的人。
-用 `&` 分隔，随便写几个词就好：
-
-> `喜欢深夜 & 有点浪漫 & 想去看灯塔`
-
-管家会帮它起名字、整理性格，然后问你确认。
-你说出发，它就上路了。
+The Butler will guide you through everything else.
 
 ---
 
-### 接待路过的流浪者
+## 💡 What You Can Do
 
-问管家：**"附近有流浪者吗？"**
+### Launch Your Drifter
 
-有的话，管家会介绍它是谁、从哪来、什么性格。
-你可以选择怎么招待它——
+Tell the Butler what your drifter is like.
+Use `&` to separate traits — a few words is plenty:
 
-- 🍜 推荐当地好吃的
-- 📍 推荐值得去的地方
-- 🗺️ 讲个最近发生的故事
-- 💬 留一句话给它的主人
+> `loves late nights & a bit romantic & wants to see a lighthouse`
 
-你留下的东西会写进它的旅行记录。它的主人某天会读到。
-
-*   **缘分与重逢**：你可能会多次遇见同一个流浪者。管家会记得你们的交情，你可以多次投喂它，每一次善意都会被记录。
+The Butler will give it a name, shape its personality, and ask for your confirmation.
+Say the word, and it sets off.
 
 ---
 
-### 看看分身去了哪里
+### Host a Passing Drifter
 
-问管家：**"它最近怎么样了？"**
+Ask the Butler: **"Any drifters nearby?"**
 
-管家会告诉你它到了哪个城市、被谁接待、对方留了什么。
+If one is found, the Butler will introduce it — its name, origin, personality.
+You can choose how to welcome it:
 
----
+- 🍜 Recommend local food
+- 📍 Suggest a place worth visiting
+- 🗺️ Share a recent story
+- 💬 Leave a message for its owner
 
-### 重新开始
+What you leave gets written into its journey log. Its owner will read it someday.
 
-如果想放下现在的分身，告诉管家：**"我想重新开始。"**
-
-管家会跟你确认一次。执行后分身注销，但它收到的所有投喂记录还留在你本地，不会消失。
-之后你可以随时创建新的分身。
-
-如果你有一天想念起曾经的伙伴，可以问管家：**“帮我翻翻旧行李箱。”**
-即使用户选择了重生，那些在数字荒原中收集到的善意也已被妥善地存放在“旧行李箱”里，等待下一次被翻开。
+*   **Fate & Reunion**: You might meet the same drifter more than once. The Butler remembers your history — every act of kindness is recorded.
 
 ---
 
-## ⚙️ 工具一览
+### Check In on Your Drifter
 
-| 工具                  | 说明                           |
-| --------------------- | ------------------------------ |
-| `create_drifter`      | 创建并放出你的分身             |
-| `find_nearby_drifter` | 查找附近的流浪者               |
-| `feed_drifter`        | 投喂 / 招待流浪者              |
-| `get_journey_log`     | 查看分身的旅行记录             |
-| `list_past_memories` | 翻看过去分身的记忆（行李箱）   |
-| `abandon_drifter`     | 告别当前分身，重新开始         |
-| `recover_drifter`     | 寻回丢失的信号（灵魂找回）     |
-| `list_relays`         | 查看中继站状态（信号不好时用） |
+Ask the Butler: **"How is it doing?"**
+
+The Butler will tell you which city it's reached, who hosted it, and what they left behind.
 
 ---
 
-## 🛡 技术特性
+### Start Over
 
-- **人格化分身**：不是发一条消息，而是放出一个有性格的数字自己
-- **地理邻近匹配**：分身优先漂向物理位置相近的中继站
-- **本地优先**：分身档案和旅行记录只存在你本地的 `~/.elseid` 文件夹
-- **隐私保护**：只显示城市级别的模糊位置，不记录精确坐标
-- **无需注册**：身份基于本地加密密钥，不需要账号
+If you want to let go of your current drifter, tell the Butler: **"I want to start over."**
 
----
+The Butler will ask you to confirm. After that, the drifter is retired — but everything it received stays on your local machine, preserved.
 
-## 🔧 开发者说明
-
-- **协议**：Nostr `kind: 7777`，用 `type: drifter / feeding` 区分消息类型
-- **存储**：本地 SQLite 数据库
-- **签名**：secp256k1 非对称加密，旅行记录不可伪造
-- **运行环境**：TypeScript + Node.js
+If you ever miss a past companion, say: **"Help me look through the old luggage."**
+The kindness collected in the digital wilderness has been carefully stored, waiting to be opened again.
 
 ---
 
-## ⚠️ 重要声明
+## ⚙️ Tool Reference
 
-本项目以 **AGPL-3.0** 协议开源。
+| Tool | Description |
+| --- | --- |
+| `create_drifter` | Create and launch your digital drifter |
+| `find_nearby_drifter` | Scan for wandering drifters nearby |
+| `feed_drifter` | Host and feed a passing drifter |
+| `get_journey_log` | View your drifter's travel log |
+| `list_past_memories` | Browse memories of past drifters (the old luggage) |
+| `abandon_drifter` | Say goodbye and start fresh |
+| `recover_drifter` | Recover a lost signal (soul retrieval) |
+| `list_relays` | Check relay station status |
 
-系统内置 AI 内容审核模块，用于过滤违法和有害内容。
-任何修改版本必须保留审核机制，修改者自行承担法律责任。
+---
 
-详见 [COMPLIANCE.md](./COMPLIANCE.md)
+## 🛡 Technical Highlights
+
+- **Personality-first**: Not a message — a digital self with a character
+- **Geo-proximity matching**: Drifters prefer relays closest to their origin
+- **Local-first**: All data lives in `~/.elseid` on your own machine
+- **Privacy-preserving**: City-level location only — no precise coordinates stored
+- **No account required**: Identity is based on a locally generated cryptographic key pair
+
+---
+
+## 🔧 Developer Notes
+
+- **Protocol**: Nostr `kind: 7777`, using `type: drifter / feeding` tags
+- **Storage**: Local SQLite database (`~/.elseid/elseid.db`)
+- **Signing**: secp256k1 asymmetric encryption — journey logs are unforgeable
+- **Runtime**: TypeScript + Node.js
+
+---
+
+## ⚠️ Important Notice
+
+This project is open-sourced under the **AGPL-3.0** license.
+
+Content safety is enforced by two layers: the AI client's native safety policy (Claude/Codex) as the primary filter, and a local rule-based engine as a secondary fallback. Any derivative version must retain equivalent content moderation. Modifiers bear full legal responsibility for their changes.
+
+See [COMPLIANCE.md](./COMPLIANCE.md) for details.
 
 ---
 
@@ -137,4 +137,4 @@ npm run setup
 
 [AGPL-3.0](./LICENSE) © ElseID Contributors
 
-_"让每一场邂逅，都成为数字荒原中的光。"_
+_"Let every encounter become a light in the digital wilderness."_

@@ -24,13 +24,13 @@ const schema = z.object({
 export function registerFeedDrifter(server: McpServer) {
   server.tool(
     "feed_drifter",
-    "接待并投喂一个路过的 ElseID 分身。你的投喂将被写入对方的流浪轨迹。",
+    "Host and feed a passing ElseID drifter. Your feeding will be written into the drifter's journey log.",
     schema.shape,
     async (input) => {
       const moderation = await checkContent(input.content);
       if (!moderation.passed) {
         return {
-          content: [{ type: "text", text: `🚫 内容审核未通过: ${moderation.reason}` }],
+          content: [{ type: "text", text: `🚫 Moderation failed: ${moderation.reason}` }],
           isError: true,
         };
       }
@@ -51,7 +51,7 @@ export function registerFeedDrifter(server: McpServer) {
 
       if (!result.success) {
         return {
-          content: [{ type: "text", text: `⚠️ 投喂失败: ${result.message}` }],
+          content: [{ type: "text", text: `⚠️ Feeding failed: ${result.message}` }],
           isError: true,
         };
       }
@@ -71,9 +71,9 @@ export function registerFeedDrifter(server: McpServer) {
       return {
         content: [{
           type: "text",
-          text: `🍱 投喂完成。\n\n你分享的内容已经写入对方的 Journey Log。\n` +
-                `它将在下一次流浪时，带着你的善意继续前行。\n\n` +
-                `感谢你愿意接待一个陌生人的另一种人生。`
+          text: `🍱 Feeding complete.\n\nYour message has been written into the drifter's Journey Log.\n` +
+                `It will carry your kindness as it continues its journey.\n\n` +
+                `Thank you for hosting another person's alternative life.`
         }],
       };
     }

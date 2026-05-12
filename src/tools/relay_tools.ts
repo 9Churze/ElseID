@@ -93,13 +93,13 @@ export function registerRelayTools(server: McpServer) {
 function formatRelayList(relays: RelayInfo[]): string {
   if (relays.length === 0) return "No relay data available.";
 
-  const header = `📡 中继站状态 (${relays.filter(r => r.online).length}/${relays.length} 在线)\n`;
+  const header = `📡 Relay Status (${relays.filter(r => r.online).length}/${relays.length} online)\n`;
   const rows = relays.map((r, i) => {
     const status  = r.online   ? "🟢" : "🔴";
     const write   = r.writable ? "✍️ " : "👁️ ";
     const latency = r.latencyMs !== null ? `${r.latencyMs}ms`.padStart(6) : "  —  ";
     // Show region label instead of raw URL to preserve world-language aesthetic.
-    const label = r.region ? `[${r.region}] 中继站 ${i + 1}` : `中继站 ${i + 1}`;
+    const label = r.region ? `[${r.region}] Relay Station ${i + 1}` : `Relay Station ${i + 1}`;
     return `  ${status} ${write} ${latency}  ${label}`;
   });
 

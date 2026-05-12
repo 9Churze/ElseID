@@ -9,37 +9,37 @@ import { getPastMemories } from "../storage/drifters.js";
 export function registerListPastMemories(server: McpServer) {
   server.tool(
     "list_past_memories",
-    "从旧行李箱里翻出过去的分身记忆（查看已注销的分身及其见闻录）。",
+    "Browse memories of past (abandoned) drifters and their journey logs from the 'old luggage'.",
     {},
     async () => {
       const memories = getPastMemories();
 
       if (memories.length === 0) {
         return {
-          content: [{ type: "text", text: "🧳 旧行李箱里空空如也，你还没有向过去告别过。" }],
+          content: [{ type: "text", text: "🧳 The old luggage is empty. You haven't said goodbye to any past self yet." }],
         };
       }
 
-      let report = "📜 你翻开了旧行李箱，找到了以下过去的记忆：\n\n";
+      let report = "📜 You opened the old luggage and found the following memories of the past:\n\n";
 
       for (const { drifter, journey } of memories) {
         const abandonedDate = new Date((drifter.abandonedAt || 0) * 1000).toLocaleDateString();
         report += `═══ 「${drifter.name}」 ═══\n`;
-        report += `⏳ 告别时间: ${abandonedDate}\n`;
-        report += `🏷️ 性格标签: ${drifter.trait}\n`;
+        report += `⏳ Departed on: ${abandonedDate}\n`;
+        report += `🏷️ Personality: ${drifter.trait}\n`;
         
         if (journey.length === 0) {
-          report += `🌊 这段旅程还没来得及留下痕迹就结束了。\n\n`;
+          report += `🌊 This journey ended before leaving any traces.\n\n`;
         } else {
-          report += `📬 留下的见闻 (${journey.length} 条):\n`;
-          // 只展示最近的 3 条，避免太长
+          report += `📬 Legacy of Encounters (${journey.length} items):\n`;
+          // Only show top 3 to keep it concise
           const displayJourney = journey.slice(0, 3);
           for (const f of displayJourney) {
             const date = new Date(f.fedAt * 1000).toLocaleDateString();
-            report += `  • [${date}] ${f.locationCity || "未知"}: "${f.content}"\n`;
+            report += `  • [${date}] ${f.locationCity || "Unknown"}: "${f.content}"\n`;
           }
           if (journey.length > 3) {
-            report += `  ... 以及另外 ${journey.length - 3} 条被尘封的记录。\n`;
+            report += `  ... and ${journey.length - 3} more sealed records.\n`;
           }
           report += "\n";
         }

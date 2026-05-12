@@ -18,7 +18,7 @@ const schema = z.object({
 export function registerAbandonDrifter(server: McpServer) {
   server.tool(
     "abandon_drifter",
-    "Abandon your current digital drifter and rotate your identity. This is a permanent action.",
+    "Abandon your current digital drifter and rotate your identity. This is a permanent and irreversible action.",
     schema.shape,
     async (input) => {
       if (!input.confirm) {

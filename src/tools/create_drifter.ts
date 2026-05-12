@@ -23,7 +23,7 @@ const schema = z.object({
 export function registerCreateDrifter(server: McpServer) {
   server.tool(
     "create_drifter",
-    "创建并放出你的 ElseID 分身。作为管家，你必须负责从用户的描述中提取核心特质(trait)和人格标签(tags)后再调用此工具。",
+    "Create and launch your ElseID drifter. As the Butler, you are responsible for extracting the core trait and personality tags from the user's description before calling this tool.",
     schema.shape,
     async (input) => {
       const identity = getPrimaryIdentity();
@@ -31,7 +31,7 @@ export function registerCreateDrifter(server: McpServer) {
       // 1. Check for existing drifter or active lock
       if (identity.activeDrifterId || isCreating()) {
         return {
-          content: [{ type: "text", text: "❌ 你已经有一个分身正在旅途中，或者正在尝试离岸。请勿重复操作。" }],
+          content: [{ type: "text", text: "❌ You already have a drifter on a journey or in the process of launching. Please wait." }],
           isError: true,
         };
       }
@@ -82,9 +82,9 @@ export function registerCreateDrifter(server: McpServer) {
         return {
           content: [{
             type: "text",
-            text: `🚀 ElseID 创建成功！\n\n「${input.name}」已离岸，正在进入流浪网络…\n\n` +
-                  `📍 初始中继站: ${relayUrl}\n` +
-                  `🌊 当前状态: 正在寻找第一个愿意接待它的人。`
+            text: `🚀 ElseID launched successfully!\n\n「${input.name}」 has set sail and is entering the wandering network...\n\n` +
+                  `📍 Initial Relay: ${relayUrl}\n` +
+                  `🌊 Status: Looking for the first person to host it.`
           }],
         };
       } finally {

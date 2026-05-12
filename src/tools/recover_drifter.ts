@@ -19,7 +19,7 @@ const schema = z.object({
 export function registerRecoverDrifter(server: McpServer) {
   server.tool(
     "recover_drifter",
-    "寻回漂流在外的数字信号。当管家感应到你有失控的分身时使用。",
+    "Recover wandering digital signals. Use this when the Butler senses you have a lost or orphaned drifter.",
     schema.shape,
     async (input) => {
       const identity = getPrimaryIdentity();
@@ -37,7 +37,7 @@ export function registerRecoverDrifter(server: McpServer) {
       
       if (remoteEvents.length === 0) {
         return {
-          content: [{ type: "text", text: "🏮 信号微弱，没有在这片星域感应到属于你的灵魂印记。" }],
+          content: [{ type: "text", text: "🏮 The signal is weak. No soul imprint belonging to you was sensed in this sector." }],
         };
       }
 
@@ -46,7 +46,7 @@ export function registerRecoverDrifter(server: McpServer) {
 
       if (orphaned.length === 0) {
         return {
-          content: [{ type: "text", text: "✅ 所有的分身都在你的指引之下，没有迷失的信号。" }],
+          content: [{ type: "text", text: "✅ All drifters are under your guidance. No lost signals found." }],
         };
       }
 
@@ -60,9 +60,9 @@ export function registerRecoverDrifter(server: McpServer) {
         saveMyDrifter({
           id: event.id,
           pubkey: event.pubkey,
-          name: getTag(event.tags, "name") || "寻回的分身",
+          name: getTag(event.tags, "name") || "Recovered Drifter",
           personality: getTag(event.tags, "personality") || event.content,
-          trait: getTag(event.tags, "trait") || "未知",
+          trait: getTag(event.tags, "trait") || "Unknown",
           tags: event.tags.filter(([k]) => k === "t").map(([, v]) => v),
           relay: picked.relay,
           departedAt: event.created_at,
@@ -76,8 +76,8 @@ export function registerRecoverDrifter(server: McpServer) {
       return {
         content: [{
           type: "text",
-          text: `✨ 灵魂归位。\n\n已成功找回并同步分身 「${getTag(event.tags, "name") || "未知"}」 的信号。\n` +
-                `它正停留在 ${picked.relay}，等待你的下一步指令。`
+          text: `✨ Soul retrieved.\n\nSuccessfully found and synchronized the signal for drifter 「${getTag(event.tags, "name") || "Unknown"}」.\n` +
+                `It is currently at ${picked.relay}, waiting for your next instruction.`
         }],
       };
     }

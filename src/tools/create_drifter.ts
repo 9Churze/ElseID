@@ -6,7 +6,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getFuzzyLocation } from "../location/geo.js";
-import { getPrimaryIdentity, setActiveDrifter } from "../storage/identity.js";
+import { getPrimaryIdentity, setActiveDrifter, isCreating, setCreationLock } from "../storage/identity.js";
 import { buildDrifterEvent } from "../nostr/event_builder.js";
 import { signEvent } from "../nostr/event_signer.js";
 import { pickRelayByGeo } from "../relay/selector.js";
@@ -27,61 +27,71 @@ export function registerCreateDrifter(server: McpServer) {
     schema.shape,
     async (input) => {
       const identity = getPrimaryIdentity();
-      if (identity.activeDrifterId) {
+      
+      // 1. Check for existing drifter or active lock
+      if (identity.activeDrifterId || isCreating()) {
         return {
-          content: [{ type: "text", text: "❌ 你的 ElseID 正在旅途中。如需开启新旅程，请先进行重生仪式（abandon_drifter）。" }],
+          content: [{ type: "text", text: "❌ 你已经有一个分身正在旅途中，或者正在尝试离岸。请勿重复操作。" }],
           isError: true,
         };
       }
 
-      const location = await getFuzzyLocation();
-      
-      const unsigned = buildDrifterEvent({
-        pubkey: identity.pubkey,
-        name: input.name,
-        personality: input.personality,
-        analysis: {
+      // 2. Lock creation process
+      setCreationLock(true);
+
+      try {
+        const location = await getFuzzyLocation();
+        
+        const unsigned = buildDrifterEvent({
+          pubkey: identity.pubkey,
+          name: input.name,
+          personality: input.personality,
+          analysis: {
+            trait: input.trait,
+            tags: input.tags,
+          },
+          location,
+          content: input.personality,
+        });
+
+        const signed = signEvent(unsigned, identity.privkey);
+        const relayUrl = pickRelayByGeo(location);
+        const result = await broadcast(signed, relayUrl);
+
+        if (!result.success) {
+          return {
+            content: [{ type: "text", text: `⚠️ Launch failed: ${result.message}` }],
+            isError: true,
+          };
+        }
+
+        saveMyDrifter({
+          id: signed.id,
+          pubkey: signed.pubkey,
+          privkey: identity.privkey,
+          name: input.name,
+          personality: input.personality,
           trait: input.trait,
           tags: input.tags,
-        },
-        location,
-        content: input.personality, // Use the personality/quote as the content
-      });
+          relay: relayUrl,
+          departedAt: signed.created_at,
+          status: "roaming",
+        });
 
-      const signed = signEvent(unsigned, identity.privkey);
-      const relayUrl = pickRelayByGeo(location);
-      const result = await broadcast(signed, relayUrl);
+        setActiveDrifter(signed.id);
 
-      if (!result.success) {
         return {
-          content: [{ type: "text", text: `⚠️ Launch failed: ${result.message}` }],
-          isError: true,
+          content: [{
+            type: "text",
+            text: `🚀 ElseID 创建成功！\n\n「${input.name}」已离岸，正在进入流浪网络…\n\n` +
+                  `📍 初始中继站: ${relayUrl}\n` +
+                  `🌊 当前状态: 正在寻找第一个愿意接待它的人。`
+          }],
         };
+      } finally {
+        // 3. Unlock creation process
+        setCreationLock(false);
       }
-
-      saveMyDrifter({
-        id: signed.id,
-        pubkey: signed.pubkey,
-        privkey: identity.privkey,
-        name: input.name,
-        personality: input.personality,
-        trait: input.trait,
-        tags: input.tags,
-        relay: relayUrl,
-        departedAt: signed.created_at,
-        status: "roaming",
-      });
-
-      setActiveDrifter(signed.id);
-
-      return {
-        content: [{
-          type: "text",
-          text: `🚀 ElseID 创建成功！\n\n「${input.name}」已离岸，正在进入流浪网络…\n\n` +
-                `📍 初始中继站: ${relayUrl}\n` +
-                `🌊 当前状态: 正在寻找第一个愿意接待它的人。`
-        }],
-      };
     }
   );
 }

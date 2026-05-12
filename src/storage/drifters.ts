@@ -131,6 +131,18 @@ export function getMyDrifterJourney(drifterId: string): Feeding[] {
   return rows.map(rowToFeeding);
 }
 
+export function getPastMemories(): { drifter: Drifter, journey: Feeding[] }[] {
+  const drifters = getDb().prepare(`
+    SELECT * FROM drifters WHERE status = 'abandoned' ORDER BY abandoned_at DESC
+  `).all() as any[];
+
+  return drifters.map(row => {
+    const drifter = rowToDrifter(row);
+    const journey = getMyDrifterJourney(drifter.id);
+    return { drifter, journey };
+  });
+}
+
 // ── Row mapping ───────────────────────────────────────────────
 
 function rowToDrifter(row: any): Drifter {

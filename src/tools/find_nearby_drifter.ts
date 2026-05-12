@@ -27,37 +27,24 @@ export function registerFindNearbyDrifter(server: McpServer) {
 
       const rawEvents = await subscribeMany(relayUrls, filter);
       
-      // Filter out:
-      // 1. My own drifter
-      // 2. Already hosted drifters (checks 'feedings' table)
-      const events = rawEvents.filter(item => {
-        const isMine = item.event.pubkey === identity.pubkey;
-        const hosted = hasHostedBefore(item.event.id);
-        return !isMine && !hosted;
-      });
-
+      const events = rawEvents.filter(item => item.event.pubkey !== identity.pubkey);
+      
       if (events.length === 0) {
         return {
           content: [{ type: "text", text: "🌊 暂时没有路过的 ElseID 分身。请稍后再来。" }],
         };
       }
 
-      // Pick the best match
-      const picked = events[0];
-      const event = picked.event;
-
-      // Log the hosting in 'feedings'
-      saveOutgoingFeeding({
-        id: "encounter-" + event.id.slice(0, 8),
-        drifterId: event.id,
-        feederPubkey: identity.pubkey,
-        feedType: "other",
-        content: "Encountered",
-        locationCountry: location.country,
-        locationCity: location.city,
-        fedAt: Math.floor(Date.now() / 1000),
-        relay: picked.relay
+      // Prioritize drifters we haven't met yet
+      const sortedEvents = [...events].sort((a, b) => {
+        const aHosted = hasHostedBefore(a.event.id) ? 1 : 0;
+        const bHosted = hasHostedBefore(b.event.id) ? 1 : 0;
+        return aHosted - bHosted; // 0 (new) before 1 (hosted)
       });
+
+      const picked = sortedEvents[0];
+      const event = picked.event;
+      const isFamiliar = hasHostedBefore(event.id);
 
       const name = getTag(event.tags, "name") || "无名分身";
       const personality = getTag(event.tags, "personality") || "未知";
@@ -66,12 +53,14 @@ export function registerFindNearbyDrifter(server: McpServer) {
       return {
         content: [{
           type: "text",
-          text: `🛰️ 检测到附近存在流浪信号。打捞成功！\n\n` +
+          text: (isFamiliar ? "[FAMILIAR_FACE] " : "") +
+                `🛰️ 检测到附近存在流浪信号。打捞成功！\n\n` +
                 `「${name}」\n` +
                 `📍 来源: ${origin}\n` +
                 `🏷️ 人格标签: ${personality}\n` +
                 `💬 心声: "${event.content}"\n\n` +
                 `它正在你的终端短暂停留。你愿意为它留下一点关于这个世界的东西吗？\n\n` +
+                (isFamiliar ? `（它似乎和你有些缘分，这已经不是你们第一次遇见了。）\n\n` : "") +
                 `你可以进行以下投喂：\n` +
                 `- [A] 留下一段话 (feed_drifter type="story")\n` +
                 `- [B] 分享声音或美食 (feed_drifter type="food")\n` +

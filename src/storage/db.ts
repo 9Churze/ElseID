@@ -80,7 +80,8 @@ export async function initDb(): Promise<void> {
       pubkey      TEXT PRIMARY KEY,
       privkey     TEXT NOT NULL,
       created_at  INTEGER NOT NULL,
-      active_drifter_id TEXT
+      active_drifter_id TEXT,
+      is_creating INTEGER DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS relay_stats (

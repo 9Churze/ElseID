@@ -10,6 +10,8 @@ import { registerFindNearbyDrifter } from "./tools/find_nearby_drifter.js";
 import { registerFeedDrifter }       from "./tools/feed_drifter.js";
 import { registerAbandonDrifter }    from "./tools/abandon_drifter.js";
 import { registerGetJourneyLog }     from "./tools/get_journey_log.js";
+import { registerListPastMemories } from "./tools/list_past_memories.js";
+import { registerRecoverDrifter }    from "./tools/recover_drifter.js";
 import { registerRelayTools }        from "./tools/relay_tools.js";
 import { initDb }                    from "./storage/db.js";
 import { closeAll }                  from "./nostr/ws_pool.js";
@@ -34,6 +36,8 @@ async function main() {
   registerFeedDrifter(server);
   registerAbandonDrifter(server);
   registerGetJourneyLog(server);
+  registerListPastMemories(server);
+  registerRecoverDrifter(server);
   registerRelayTools(server);   // list_relays, check_relay_status, pick_relay, refresh_relays
 
   // 5. Start stdio transport

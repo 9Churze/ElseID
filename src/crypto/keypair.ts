@@ -3,9 +3,9 @@
 // Private keys are stored ONLY on the local device.
 
 import { generateSecretKey, getPublicKey } from "nostr-tools";
-import { bytesToHex, hexToBytes }           from "@noble/hashes/utils.js";
-import { getDb }                            from "../storage/db.js";
-import type { Identity }                    from "../../types/index.js";
+import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
+import { getDb } from "../storage/db.js";
+import type { Identity } from "../../types/index.js";
 
 // Internal helpers
 
@@ -14,9 +14,9 @@ function nowSec(): number {
 }
 
 function newKeypair(): { privkey: string; pubkey: string } {
-  const secretBytes = generateSecretKey();       
-  const privkey     = bytesToHex(secretBytes);
-  const pubkey      = getPublicKey(secretBytes); 
+  const secretBytes = generateSecretKey();
+  const privkey = bytesToHex(secretBytes);
+  const pubkey = getPublicKey(secretBytes);
   return { privkey, pubkey };
 }
 
@@ -32,8 +32,8 @@ export async function getPrimaryIdentity(): Promise<Identity> {
 
   if (row) {
     return {
-      pubkey:    row.pubkey,
-      privkey:   row.privkey,
+      pubkey: row.pubkey,
+      privkey: row.privkey,
       createdAt: row.created_at,
       activeDrifterId: row.active_drifter_id,
     };
@@ -41,7 +41,7 @@ export async function getPrimaryIdentity(): Promise<Identity> {
 
   // Create new
   const { privkey, pubkey } = newKeypair();
-  const identity: Identity  = { pubkey, privkey, createdAt: nowSec(), activeDrifterId: null };
+  const identity: Identity = { pubkey, privkey, createdAt: nowSec(), activeDrifterId: null };
 
   await db.run(`
     INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id)
@@ -62,7 +62,7 @@ export async function setActiveDrifter(drifterId: string | null): Promise<void> 
 export async function rotateIdentity(): Promise<Identity> {
   const db = getDb();
   // Shred the old private key in-place
-  const scrub = bytesToHex(generateSecretKey()); 
+  const scrub = bytesToHex(generateSecretKey());
   await db.run(`UPDATE identities SET privkey = ?`, [scrub]);
 
   // Delete the now-worthless row
@@ -70,7 +70,7 @@ export async function rotateIdentity(): Promise<Identity> {
 
   // Insert fresh identity
   const { privkey, pubkey } = newKeypair();
-  const identity: Identity  = { pubkey, privkey, createdAt: nowSec(), activeDrifterId: null };
+  const identity: Identity = { pubkey, privkey, createdAt: nowSec(), activeDrifterId: null };
 
   await db.run(`
     INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id)
@@ -95,9 +95,8 @@ export async function importKeypair(privkeyHex: string): Promise<Identity> {
   }
 
   const secretBytes = hexToBytes(privkeyHex.toLowerCase());
-  const pubkey      = getPublicKey(secretBytes);
-  
-  // Clear old
+  const pubkey = getPublicKey(secretBytes);
+
   await db.run(`DELETE FROM identities`);
 
   const identity: Identity = {

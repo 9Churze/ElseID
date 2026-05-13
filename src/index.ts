@@ -1,22 +1,21 @@
 // ElseID — MCP Server Entry Point
 
-import { McpServer }           from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
-import { registerCreateDrifter }    from "./tools/create_drifter.js";
+import { registerCreateDrifter } from "./tools/create_drifter.js";
 import { registerFindNearbyDrifter } from "./tools/find_nearby_drifter.js";
-import { registerFeedDrifter }       from "./tools/feed_drifter.js";
-import { registerAbandonDrifter }    from "./tools/abandon_drifter.js";
-import { registerGetJourneyLog }     from "./tools/get_journey_log.js";
+import { registerFeedDrifter } from "./tools/feed_drifter.js";
+import { registerAbandonDrifter } from "./tools/abandon_drifter.js";
+import { registerGetJourneyLog } from "./tools/get_journey_log.js";
 import { registerListPastMemories } from "./tools/list_past_memories.js";
-import { registerRecoverDrifter }    from "./tools/recover_drifter.js";
-import { registerRelayTools }        from "./tools/relay_tools.js";
-import { initDb }                    from "./storage/db.js";
-import { closeAll }                  from "./nostr/ws_pool.js";
-import { checkAllRelays }            from "./relay/health.js";
+import { registerRecoverDrifter } from "./tools/recover_drifter.js";
+import { registerRelayTools } from "./tools/relay_tools.js";
+import { initDb } from "./storage/db.js";
+import { closeAll } from "./nostr/ws_pool.js";
+import { checkAllRelays } from "./relay/health.js";
 
 async function main() {
-  // Initialize local SQLite database
   await initDb();
 
   // Immediate Relay Refresh (Auto-Activation Optimization)
@@ -30,13 +29,11 @@ async function main() {
     console.error("[ElseID] Background relay check encountered an issue.");
   });
 
-  // Create MCP server
   const server = new McpServer({
-    name:    "elseid-mcp",
+    name: "elseid-mcp",
     version: "0.2.1", // Bumped version for the new architecture
   });
 
-  // Register all tools
   registerCreateDrifter(server);
   registerFindNearbyDrifter(server);
   registerFeedDrifter(server);
@@ -46,19 +43,17 @@ async function main() {
   registerRecoverDrifter(server);
   registerRelayTools(server);
 
-  // Start stdio transport
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
   console.error("[ElseID] Drifter MCP server activated and ready ✓");
 
-  // Graceful shutdown
   const shutdown = () => {
     console.error("[ElseID] Shutting down…");
     closeAll();
     process.exit(0);
   };
-  process.on("SIGINT",  shutdown);
+  process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
 }
 

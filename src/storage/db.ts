@@ -7,9 +7,8 @@ import os from "os";
 import fs from "fs";
 
 const DATA_DIR = process.env.ELSEID_DATA_DIR || path.join(os.homedir(), ".elseid");
-const DB_PATH  = path.join(DATA_DIR, "elseid.db");
+const DB_PATH = path.join(DATA_DIR, "elseid.db");
 
-// Ensure data directory exists
 try {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -92,6 +91,5 @@ export async function initDb(): Promise<void> {
     );
   `);
 
-  // Reset stale creation locks upon startup to prevent deadlocks from crashes
   await _db.run(`UPDATE identities SET is_creating = 0`);
 }

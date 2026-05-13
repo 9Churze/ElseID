@@ -4,15 +4,15 @@
 
 import WebSocket from "ws";
 import { WS_TIMEOUT_MS, FETCH_LIMIT } from "../../config/relays.js";
-import { newSubId }                    from "./filter.js";
-import { verifySignature }             from "./event_signer.js";
-import type { NostrEvent }             from "../../types/index.js";
-import type { NostrFilter }            from "./filter.js";
+import { newSubId } from "./filter.js";
+import { verifySignature } from "./event_signer.js";
+import type { NostrEvent } from "../../types/index.js";
+import type { NostrFilter } from "./filter.js";
 
 // Pool state
 
 const _connections = new Map<string, WebSocket>();
-const _connecting  = new Map<string, Promise<WebSocket>>();
+const _connecting = new Map<string, Promise<WebSocket>>();
 
 function getOrOpen(relayUrl: string): Promise<WebSocket> {
   const existing = _connections.get(relayUrl);
@@ -73,7 +73,7 @@ export async function subscribe(
   try {
     ws = await getOrOpen(relayUrl);
   } catch {
-    return []; // Return empty if connection fails
+    return [];
   }
 
   const subId = newSubId();
@@ -168,12 +168,12 @@ function isNostrEvent(v: unknown): v is NostrEvent {
   if (typeof v !== "object" || v === null) return false;
   const e = v as Record<string, unknown>;
   return (
-    typeof e.id         === "string" &&
-    typeof e.pubkey     === "string" &&
+    typeof e.id === "string" &&
+    typeof e.pubkey === "string" &&
     typeof e.created_at === "number" &&
-    typeof e.kind       === "number" &&
+    typeof e.kind === "number" &&
     Array.isArray(e.tags) &&
-    typeof e.content    === "string" &&
-    typeof e.sig        === "string"
+    typeof e.content === "string" &&
+    typeof e.sig === "string"
   );
 }

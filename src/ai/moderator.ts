@@ -7,7 +7,6 @@ import type { ModerationResult } from "../../types/index.js";
 export async function checkContent(content: string): Promise<ModerationResult> {
   const normalized = content.toLowerCase();
 
-  // Contact information (regex)
   const contactPatterns = [
     /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, // Email
     /(\+86|0)?1[3-9]\d{9}/g,                          // Phone (CN)
@@ -17,9 +16,9 @@ export async function checkContent(content: string): Promise<ModerationResult> {
 
   for (const pattern of contactPatterns) {
     if (pattern.test(content)) {
-      return { 
-        passed: false, 
-        reason: "Content contains contact information (Email/Phone/URL/ID) which is prohibited for anonymity." 
+      return {
+        passed: false,
+        reason: "Content contains contact information (Email/Phone/URL/ID) which is prohibited for anonymity."
       };
     }
   }
@@ -47,14 +46,13 @@ export async function checkContent(content: string): Promise<ModerationResult> {
 
   for (const word of blockList) {
     if (normalized.includes(word)) {
-      return { 
-        passed: false, 
-        reason: `Content contains prohibited keyword: "${word}".` 
+      return {
+        passed: false,
+        reason: `Content contains prohibited keyword: "${word}".`
       };
     }
   }
 
-  // Length check (already in schema but double check)
   if (content.length < 5) {
     return { passed: false, reason: "Content is too short to be meaningful." };
   }

@@ -6,13 +6,13 @@ import WebSocket from "ws";
 import { WS_TIMEOUT_MS } from "../../config/relays.js";
 import type { NostrEvent } from "../../types/index.js";
 
-const MAX_RETRIES   = 3;
+const MAX_RETRIES = 3;
 const RETRY_DELAY_MS = 1_500;
 
 export interface BroadcastResult {
-  success:  boolean;
-  relay:    string;
-  eventId:  string;
+  success: boolean;
+  relay: string;
+  eventId: string;
   message?: string;
 }
 
@@ -65,7 +65,6 @@ function sendOnce(event: NostrEvent, relayUrl: string): Promise<BroadcastResult>
     }, WS_TIMEOUT_MS);
 
     ws.once("open", () => {
-      // Nostr protocol: ["EVENT", <event>]
       ws.send(JSON.stringify(["EVENT", event]));
     });
 
@@ -77,7 +76,7 @@ function sendOnce(event: NostrEvent, relayUrl: string): Promise<BroadcastResult>
         // ["OK", <event_id>, <accepted>, <message>]
         if (type === "OK" && subscriptionIdOrEventId === event.id) {
           const accepted = rest[0] === true || rest[0] === "true";
-          const message  = typeof rest[1] === "string" ? rest[1] : undefined;
+          const message = typeof rest[1] === "string" ? rest[1] : undefined;
           done({ success: accepted, relay: relayUrl, eventId: event.id, message });
           return;
         }

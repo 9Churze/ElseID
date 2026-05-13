@@ -2,17 +2,15 @@
 // Geographic-prioritized relay selection strategy.
 
 import { getHealthyRelays } from "./health.js";
-import { DEFAULT_RELAYS }   from "../../config/relays.js";
+import { DEFAULT_RELAYS } from "../../config/relays.js";
 import type { FuzzyLocation } from "../../types/index.js";
 
 export async function pickRelayByGeo(location: FuzzyLocation): Promise<string> {
   const healthy = await getHealthyRelays();
-  
-  // Try to find a relay in the same country/region
+
   const regionMatch = healthy.find(r => r.region === location.country);
   if (regionMatch) return regionMatch.url;
 
-  // Fall back to weighted random pick (latency-based)
   return await pickRelay();
 }
 
@@ -30,12 +28,12 @@ export async function pickRelay(preferredUrl?: string): Promise<string> {
   }
 
   const weighted = healthy.map((r) => ({
-    url:    r.url,
+    url: r.url,
     weight: 1 / ((r.latencyMs ?? 500) + 100),
   }));
 
   const total = weighted.reduce((s, r) => s + r.weight, 0);
-  let   rand  = Math.random() * total;
+  let rand = Math.random() * total;
 
   for (const entry of weighted) { rand -= entry.weight; if (rand <= 0) return entry.url; }
   return weighted[0].url;
@@ -44,7 +42,6 @@ export async function pickRelay(preferredUrl?: string): Promise<string> {
 export async function pickRelaysForFetch(location: FuzzyLocation, count = 3): Promise<string[]> {
   const healthy = await getHealthyRelays();
 
-  // Sort healthy relays: matches country/region first, then others
   const sorted = [...healthy].sort((a, b) => {
     const aMatch = a.region === location.country ? 0 : 1;
     const bMatch = b.region === location.country ? 0 : 1;

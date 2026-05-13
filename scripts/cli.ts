@@ -5,7 +5,6 @@ import { checkbox, select } from "@inquirer/prompts";
 import chalk from "chalk";
 import { fileURLToPath } from 'url';
 
-// Accurate path detection
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..');
@@ -21,7 +20,6 @@ const mcpConfigName = "elseid";
 const cmd = "node";
 const args = [path.join(projectRoot, "dist/src/index.js"), "--stdio"];
 
-// Visual Style Tokens
 const BRAND = chalk.hex('#8B94FF');
 const SOCIAL_GREEN = chalk.greenBright;
 const TECH_CYAN = chalk.cyan;

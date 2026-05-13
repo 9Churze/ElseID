@@ -3,9 +3,9 @@
 // Persists results to relay_stats table for use by selector.
 
 import WebSocket from "ws";
-import { getDb }                from "../storage/db.js";
+import { getDb } from "../storage/db.js";
 import { DEFAULT_RELAYS, WS_TIMEOUT_MS, HEALTH_CHECK_INTERVAL_MS } from "../../config/relays.js";
-import type { RelayInfo }       from "../../types/index.js";
+import type { RelayInfo } from "../../types/index.js";
 
 // Single relay check
 
@@ -56,13 +56,13 @@ export async function checkRelay(url: string): Promise<RelayInfo> {
 // Batch check
 
 export async function checkAllRelays(): Promise<RelayInfo[]> {
-  const urls    = DEFAULT_RELAYS.map((r) => r.url);
+  const urls = DEFAULT_RELAYS.map((r) => r.url);
   const results = await Promise.all(urls.map(checkRelay));
 
   return results.sort((a, b) => {
     if (a.online !== b.online) return a.online ? -1 : 1;
-    if (a.latencyMs === null)  return 1;
-    if (b.latencyMs === null)  return -1;
+    if (a.latencyMs === null) return 1;
+    if (b.latencyMs === null) return -1;
     return a.latencyMs - b.latencyMs;
   });
 }
@@ -79,23 +79,21 @@ export async function getCachedRelayInfo(): Promise<RelayInfo[]> {
   }[];
 
   return rows.map((r) => ({
-    url:       r.url,
-    online:    r.online === 1,
+    url: r.url,
+    online: r.online === 1,
     latencyMs: r.latency_ms,
-    writable:  r.writable === 1,
+    writable: r.writable === 1,
   }));
 }
 
 export async function getHealthyRelays(): Promise<RelayInfo[]> {
   const cached = await getCachedRelayInfo();
   const db = getDb();
-
-  // Refresh stale data in background
   const staleThreshold = Math.floor(Date.now() / 1000) - HEALTH_CHECK_INTERVAL_MS / 1000;
   const row = await db.get(`SELECT MAX(last_check) AS lc FROM relay_stats`) as { lc: number | null };
 
   if (!row?.lc || row.lc < staleThreshold) {
-    checkAllRelays().catch(() => {});
+    checkAllRelays().catch(() => { });
   }
 
   const healthy = cached.filter((r) => r.online && r.writable);

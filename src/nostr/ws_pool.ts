@@ -22,7 +22,6 @@ function getOrOpen(relayUrl: string): Promise<WebSocket> {
     return Promise.resolve(existing);
   }
 
-  // Handle concurrent connection attempts to the same URL
   const inProgress = _connecting.get(relayUrl);
   if (inProgress) return inProgress;
 
@@ -58,9 +57,6 @@ function getOrOpen(relayUrl: string): Promise<WebSocket> {
   return promise;
 }
 
-/**
- * Close all open WebSocket connections (call on server shutdown).
- */
 export function closeAll(): void {
   for (const [url, ws] of _connections.entries()) {
     ws.close();
@@ -70,20 +66,18 @@ export function closeAll(): void {
 
 // ── Subscribe ─────────────────────────────────────────────────
 
-/**
- * Send a REQ to a relay and collect matching events until EOSE
- * (End of Stored Events) or timeout.
- *
- * Filters events that:
- *   - Fail signature verification
- *   - Have an expired TTL
- */
 export async function subscribe(
   relayUrl: string,
   filter: NostrFilter,
   timeoutMs = WS_TIMEOUT_MS * 2
 ): Promise<{ event: NostrEvent; relay: string }[]> {
-  const ws    = await getOrOpen(relayUrl);
+  let ws: WebSocket;
+  try {
+    ws = await getOrOpen(relayUrl);
+  } catch {
+    return []; // Return empty if connection fails
+  }
+
   const subId = newSubId();
   const results: { event: NostrEvent; relay: string }[] = [];
   const now = Math.floor(Date.now() / 1000);
@@ -97,17 +91,21 @@ export async function subscribe(
     function cleanup() {
       clearTimeout(timer);
       ws.removeListener("message", onMessage);
-      // Send CLOSE to release relay resources
+      ws.removeListener("close", onAbort);
+      ws.removeListener("error", onAbort);
       try { ws.send(JSON.stringify(["CLOSE", subId])); } catch { /**/ }
+    }
+
+    function onAbort() {
+      cleanup();
+      resolve(results);
     }
 
     function onMessage(raw: WebSocket.RawData) {
       let msg: unknown[];
       try {
         msg = JSON.parse(raw.toString()) as unknown[];
-      } catch {
-        return;
-      }
+      } catch { return; }
 
       const [type, id, payload] = msg;
 
@@ -119,11 +117,8 @@ export async function subscribe(
 
       if (type === "EVENT" && id === subId && isNostrEvent(payload)) {
         const event = payload as NostrEvent;
-
-        // Verify signature
         if (!verifySignature(event)) return;
 
-        // Check TTL expiry (client-side enforcement)
         const ttlTag = event.tags.find(([k]) => k === "ttl")?.[1];
         if (ttlTag && ttlTag !== "0") {
           const ttlSec = parseInt(ttlTag, 10);
@@ -139,13 +134,12 @@ export async function subscribe(
     }
 
     ws.on("message", onMessage);
+    ws.on("close", onAbort);
+    ws.on("error", onAbort);
     ws.send(JSON.stringify(["REQ", subId, filter]));
   });
 }
 
-/**
- * Fetch from multiple relays and merge results (deduplicated by event id).
- */
 export async function subscribeMany(
   relayUrls: string[],
   filter: NostrFilter
@@ -167,7 +161,6 @@ export async function subscribeMany(
     }
   }
 
-  // Sort by created_at descending (newest first)
   return merged.sort((a, b) => b.event.created_at - a.event.created_at);
 }
 

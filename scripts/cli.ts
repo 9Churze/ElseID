@@ -1,174 +1,158 @@
 import fs from "fs";
 import path from "path";
 import os from "os";
-import { checkbox, input, select } from "@inquirer/prompts";
+import { checkbox, select } from "@inquirer/prompts";
 import chalk from "chalk";
-import clipboardy from "clipboardy";
+import { fileURLToPath } from 'url';
+
+// Accurate path detection
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '..');
 
 const CONFIG_PATHS = {
-  claude: process.platform === "darwin" 
+  claude: process.platform === "darwin"
     ? path.join(os.homedir(), "Library/Application Support/Claude/claude_desktop_config.json")
     : path.join(os.homedir(), "AppData/Roaming/Claude/claude_desktop_config.json"),
   opencode: path.join(os.homedir(), ".config/opencode/opencode.json"),
 };
 
 const mcpConfigName = "elseid";
-// Default to 'bicean' as per package.json, or absolute path for local dev
-const projectRoot = process.cwd();
-const isLocalDev = fs.existsSync(path.join(projectRoot, "package.json"));
+const cmd = "node";
+const args = [path.join(projectRoot, "dist/src/index.js"), "--stdio"];
 
-const mcpConfigPayload = {
-  type: "local",
-  // If installing from source, use absolute path for reliability
-  command: isLocalDev ? "node" : "npx",
-  args: isLocalDev 
-    ? [path.join(projectRoot, "dist/src/index.js")]
-    : ["-y", "bicean@latest", "--stdio"],
-  enabled: true
-};
+// Visual Style Tokens
+const BRAND = chalk.hex('#8B94FF');
+const SOCIAL_GREEN = chalk.greenBright;
+const TECH_CYAN = chalk.cyan;
+const DIM = chalk.gray;
+const ITALIC = chalk.italic;
+const SEPARATOR = DIM('—'.repeat(60));
 
-const BRAND_COLOR = chalk.hex('#818cf8'); 
-const SUCCESS_COLOR = chalk.hex('#10b981'); 
+const OPENCODE_COMMANDS = [
+  {
+    id: "elseid-home",
+    name: "ElseID: Summon Butler",
+    description: "Call your digital butler to start an identity management session.",
+    prompt: "Hello Butler, I'd like to discuss the management of my ElseID digital avatar."
+  },
+  {
+    id: "elseid-status",
+    name: "ElseID: Status Query",
+    description: "Quickly check the current wandering location and status of your avatar.",
+    prompt: "Run elseid_get_journey_log and tell me the current status of my avatar."
+  },
+  {
+    id: "elseid-nearby",
+    name: "ElseID: Encounter Search",
+    description: "Search for other drifter signals passing nearby.",
+    prompt: "Run elseid_find_nearby_drifter to see if there are any interesting souls nearby."
+  },
+  {
+    id: "elseid-log",
+    name: "ElseID: Journey Archive",
+    description: "View full wandering trajectory and feeding history logs.",
+    prompt: "I want to view the complete journey trajectory and feeding history archive of my avatar."
+  }
+];
 
 async function injectConfig(client: string, configPath: string) {
-  if (!fs.existsSync(configPath)) return false;
-  try {
-    const rawData = fs.readFileSync(configPath, "utf8");
-    let config = JSON.parse(rawData);
+  const dir = path.dirname(configPath);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-    if (client === 'claude') {
-      if (!config.mcpServers) config.mcpServers = {};
-      config.mcpServers[mcpConfigName] = {
-        command: mcpConfigPayload.command,
-        args: mcpConfigPayload.args
-      };
-    } else if (client === 'opencode') {
-      if (!config.mcp) config.mcp = {};
-      config.mcp[mcpConfigName] = mcpConfigPayload;
+  let config: any = {};
+  if (fs.existsSync(configPath)) {
+    try {
+      config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+    } catch { config = {}; }
+  }
+
+  if (client === 'claude') {
+    if (!config.mcpServers) config.mcpServers = {};
+    config.mcpServers[mcpConfigName] = { command: cmd, args: args };
+  } else if (client === 'opencode' || client === 'cursor' || client === 'windsurf') {
+    if (!config.mcp) config.mcp = {};
+    config.mcp[mcpConfigName] = { type: "local", command: [cmd, ...args], enabled: true };
+    if (client === 'opencode') {
+      if (!config.commands) config.commands = [];
+      config.commands = config.commands.filter((c: any) => !c.id.startsWith("elseid-"));
+      config.commands.push(...OPENCODE_COMMANDS);
     }
+  }
 
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8");
-    return true;
-  } catch { return false; }
+  fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8");
+  return true;
 }
 
 async function main() {
   console.clear();
+
+  // ── Welcome & Branding ──────────────────────────────────────────
+  console.log(`  ${DIM('Welcome to ELSEID - An AI-driven Decentralized Habitat.')}`);
+
+  const logoHeader = `
+  ${BRAND.bold(`██████  ██       ██████  ███████ ██ ██████  `)}
+  ${BRAND.bold(`██      ██      ██       ██      ██ ██   ██ `)}
+  ${BRAND.bold(`█████   ██       ██████  █████   ██ ██   ██ `)}
+  ${BRAND.bold(`██      ██            ██ ██      ██ ██   ██ `)}
+  ${BRAND.bold(`███████ ███████  ██████  ███████ ██ ██████  `)}
+  
+  ${BRAND('Exile your digital soul')} ${DIM('｜')} ${DIM('0x7E 0x1D')}
+  `;
+
+  console.log(logoHeader);
+  console.log(`  ${SEPARATOR}`);
+  console.log(`  ${ITALIC('"Anchored in reality, drifting into the unknown."')}`);
   console.log(`
-${BRAND_COLOR(`  ██████  ██       ██████  ███████ ██ ██████  
-  ██      ██      ██       ██      ██ ██   ██ 
-  █████   ██       ██████  █████   ██ ██   ██ 
-  ██      ██            ██ ██      ██ ██   ██ 
-  ███████ ███████  ██████  ███████ ██ ██████  `)}
-  `);
+  Here, you will possess a ${BRAND('self-evolving digital avatar')}.
+  Your shadow in the cyber-wasteland, traversing encrypted nodes 
+  on your behalf, embarking on an ${TECH_CYAN('endless journey of discovery')}.`);
+  console.log(`  ${SEPARATOR}\n`);
 
-  let state = {
-    selectedClients: [] as string[],
-    drifterName: '',
-    drifterTraits: ''
-  };
+  const promptPrefix = `${TECH_CYAN('λ')} ${chalk.bold('ELSEID')} ${DIM('»')}`;
 
-  let currentStep = 1;
+  const clientChoices = [
+    { name: '1. Claude Desktop', value: 'claude', checked: true },
+    { name: '2. OpenCode', value: 'opencode' },
+    { name: '3. Cursor', value: 'cursor' },
+    { name: '4. Windsurf', value: 'windsurf' },
+    { name: '5. Trae (ByteDance)', value: 'trae' },
+    { name: '6. Codex', value: 'codex' },
+    { name: '7. Antigravity', value: 'antigravity' },
+    { name: '8. Gemini', value: 'gemini' },
+    { name: '9. Continue', value: 'continue' },
+    { name: '10. Roo Code', value: 'roocode' },
+    { name: '11. Other (Manual Setup)', value: 'other' }
+  ];
 
-  while (currentStep <= 3) {
-    if (currentStep === 1) {
-      console.log(chalk.gray(` 01 ──────────────────────────────────────────`));
-      const clientChoices = [
-        { name: '1. Claude Desktop', value: 'claude', checked: true },
-        { name: '2. Cursor', value: 'cursor' },
-        { name: '3. Codex', value: 'codex' },
-        { name: '4. Antigravity', value: 'antigravity' },
-        { name: '5. Gemini', value: 'gemini' },
-        { name: '6. OpenCode', value: 'opencode' },
-        { name: '7. Coze', value: 'coze' },
-        { name: '8. WorkBuddy', value: 'workbuddy' },
-        { name: '9. Other (Manual Setup)', value: 'other' }
-      ];
+  const selectedClients = await checkbox({
+    message: `${promptPrefix} ${chalk.white('Select AI clients to sync with your digital avatar:')}\n`,
+    choices: clientChoices,
+  });
 
-      state.selectedClients = await checkbox({
-        message: chalk.white(`Select AI clients (${clientChoices.length} available)\n${chalk.gray('  navigation: ↑↓  select: <space>  submit: ⏎')}`),
-        choices: clientChoices.map(c => ({
-          ...c, 
-          checked: state.selectedClients.includes(c.value) || (state.selectedClients.length === 0 && c.checked)
-        })),
-      });
+  if (selectedClients.length === 0) process.exit(0);
 
-      if (state.selectedClients.length === 0) continue;
-      currentStep = 2;
-    }
+  console.log(`\n  ${DIM('──────────────────────────────────────────')}`);
+  const confirm = await select({
+    message: `${promptPrefix} ${chalk.white('Ready to synchronize your soul\'s trajectory?')}`,
+    choices: [{ name: '🚀 Sync Now', value: 'go' }, { name: 'Cancel', value: 'cancel' }]
+  });
 
-    if (currentStep === 2) {
-      console.log(chalk.gray(`\n 02 ──────────────────────────────────────────`));
-      console.log(BRAND_COLOR.bold(` IDENTITY SETUP`));
-      
-      const nameInput = await input({
-        message: chalk.white('Enter Drifter Name:'),
-        default: state.drifterName || undefined,
-        validate: (val) => {
-          if (val.toLowerCase() === 'back') return true;
-          return (val.trim().length >= 2 && val.length <= 20) || '2-20 chars.';
-        },
-      });
+  if (confirm === 'cancel') process.exit(0);
 
-      if (nameInput.toLowerCase() === 'back') { currentStep = 1; console.clear(); continue; }
-      state.drifterName = nameInput;
-
-      const traitsInput = await input({
-        message: chalk.white('Enter Identity Traits:'),
-        default: state.drifterTraits || undefined,
-        validate: (val) => {
-          if (val.toLowerCase() === 'back') return true;
-          return val.trim().length >= 3 || 'Traits required.';
-        },
-      });
-
-      if (traitsInput.toLowerCase() === 'back') { currentStep = 1; console.clear(); continue; }
-      state.drifterTraits = traitsInput;
-      currentStep = 3;
-    }
-
-    if (currentStep === 3) {
-      console.log(chalk.gray(`\n 03 ──────────────────────────────────────────`));
-      console.log(BRAND_COLOR.bold(` FINAL REVIEW`));
-      console.log(chalk.white(`   Clients:  ${state.selectedClients.join(', ')}`));
-      console.log(chalk.white(`   Identity: ${state.drifterName}`));
-
-      const confirmInstall = await select({
-        message: chalk.white('Ready to install?'),
-        choices: [
-          { name: '🚀 Start Installation', value: 'go' },
-          { name: 'Back to Step 1', value: 'back_1' },
-          { name: 'Cancel', value: 'cancel' }
-        ]
-      });
-
-      if (confirmInstall === 'back_1') { currentStep = 1; console.clear(); continue; }
-      if (confirmInstall === 'cancel') process.exit(0);
-
-      console.log(chalk.gray("\n  Installing..."));
-      let showManualConfig = false;
-      for (const client of state.selectedClients) {
-        const pathKey = client as keyof typeof CONFIG_PATHS;
-        if (CONFIG_PATHS[pathKey]) {
-          const success = await injectConfig(client, CONFIG_PATHS[pathKey]);
-          if (success) console.log(SUCCESS_COLOR(`  ✓ Successfully configured ${client}.`));
-          else showManualConfig = true;
-        } else {
-          showManualConfig = true;
-        }
-      }
-
-      if (showManualConfig) {
-        const displayJson = { mcp: { [mcpConfigName]: mcpConfigPayload } };
-        console.log(chalk.white(`\n  Manual JSON (Copied to clipboard):`));
-        console.log(chalk.gray(JSON.stringify(displayJson, null, 2)));
-        try { clipboardy.writeSync(JSON.stringify(displayJson, null, 2)); } catch {}
-      }
-      break;
+  console.log(chalk.gray("\n  Injecting protocol..."));
+  for (const client of selectedClients) {
+    const pathKey = client as keyof typeof CONFIG_PATHS;
+    const configPath = CONFIG_PATHS[pathKey];
+    if (configPath) {
+      await injectConfig(client, configPath);
+      console.log(SOCIAL_GREEN(`  ✓ ${client} protocol activated`));
+    } else {
+      console.log(DIM(`  - ${client}: Manual setup required`));
     }
   }
 
-  console.log(`\n  ${SUCCESS_COLOR.bold("SUCCESS")} Done. Restart your client.\n`);
+  console.log(`\n  ${SOCIAL_GREEN.bold("SYNC SUCCESS")} Identity ready. Restart your client and call the Butler.\n`);
 }
 
-main().catch((err) => { process.exit(1); });
+main().catch(() => process.exit(1));

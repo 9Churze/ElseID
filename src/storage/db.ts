@@ -94,11 +94,6 @@ export async function initDb(): Promise<void> {
     );
   `);
 
-  // Schema migration
-  try {
-    await _db.exec(`ALTER TABLE identities ADD COLUMN is_creating INTEGER DEFAULT 0`);
-  } catch { /* safe to ignore if exists */ }
-
-  // Reset stale creation locks
-  await _db.run(`UPDATE identities SET is_creating = 0 WHERE is_creating = 1`);
+  // Reset stale creation locks upon startup to prevent deadlocks from crashes
+  await _db.run(`UPDATE identities SET is_creating = 0`);
 }

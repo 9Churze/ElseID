@@ -34,3 +34,4 @@ coverage/
 # Generated reports
 docs/*_report.md
 RECONSTRUCTION_REPORT.md\n# Testing/Internal docs\ndocs/system_prompt_zh.md
+\n.elseid-lab/

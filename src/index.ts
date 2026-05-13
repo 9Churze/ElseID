@@ -21,13 +21,21 @@ async function main() {
   // 1. Initialize local SQLite database
   await initDb();
 
-  // 2. Pre-warm relay health cache in background
-  checkAllRelays().catch(() => {/* non-fatal */});
+  // 2. Immediate Relay Refresh (Auto-Activation Optimization)
+  // We trigger this immediately and don't block the main server startup.
+  // This ensures that by the time the user sends their first prompt, 
+  // the relay stats are already fresh.
+  checkAllRelays().then((results) => {
+    const online = results.filter(r => r.online).length;
+    console.error(`[ElseID] Relay health check complete: ${online}/${results.length} stations online.`);
+  }).catch(() => {
+    console.error("[ElseID] Background relay check encountered an issue.");
+  });
 
   // 3. Create MCP server
   const server = new McpServer({
     name:    "elseid-mcp",
-    version: "0.2.0",
+    version: "0.2.1", // Bumped version for the new architecture
   });
 
   // 4. Register all tools
@@ -38,13 +46,13 @@ async function main() {
   registerGetJourneyLog(server);
   registerListPastMemories(server);
   registerRecoverDrifter(server);
-  registerRelayTools(server);   // list_relays, check_relay_status, pick_relay, refresh_relays
+  registerRelayTools(server);
 
   // 5. Start stdio transport
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  console.error("[ElseID] Drifter MCP server started ✓");
+  console.error("[ElseID] Drifter MCP server activated and ready ✓");
 
   // 6. Graceful shutdown
   const shutdown = () => {
@@ -57,6 +65,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("[ElseID] Fatal error:", err);
+  console.error("[ElseID] Fatal error during startup:", err);
   process.exit(1);
 });

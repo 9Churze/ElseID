@@ -53,7 +53,9 @@ export async function initDb(): Promise<void> {
     CREATE TABLE IF NOT EXISTS feedings (
       id              TEXT PRIMARY KEY,      
       drifter_id      TEXT NOT NULL,         
+      drifter_name    TEXT,
       feeder_pubkey   TEXT NOT NULL,         
+      feeder_name     TEXT,
       feed_type       TEXT NOT NULL,         
       content         TEXT NOT NULL,         
       location_country TEXT,                 
@@ -66,6 +68,7 @@ export async function initDb(): Promise<void> {
       id              TEXT PRIMARY KEY,      
       drifter_id      TEXT NOT NULL,         
       feeder_pubkey   TEXT NOT NULL,         
+      feeder_name     TEXT,
       feed_type       TEXT NOT NULL,         
       content         TEXT NOT NULL,         
       location_country TEXT,                 
@@ -79,7 +82,8 @@ export async function initDb(): Promise<void> {
       privkey     TEXT NOT NULL,
       created_at  INTEGER NOT NULL,
       active_drifter_id TEXT,
-      is_creating INTEGER DEFAULT 0
+      is_creating INTEGER DEFAULT 0,
+      host_name   TEXT
     );
 
     CREATE TABLE IF NOT EXISTS relay_stats (
@@ -92,4 +96,25 @@ export async function initDb(): Promise<void> {
   `);
 
   await _db.run(`UPDATE identities SET is_creating = 0`);
+
+  // Migration for adding host_name column
+  try {
+    const tableInfo = await _db.all(`PRAGMA table_info(identities)`);
+    if (!tableInfo.some(col => col.name === 'host_name')) {
+      await _db.exec(`ALTER TABLE identities ADD COLUMN host_name TEXT`);
+    }
+
+    const feedingsInfo = await _db.all(`PRAGMA table_info(feedings)`);
+    if (!feedingsInfo.some(col => col.name === 'drifter_name')) {
+      await _db.exec(`ALTER TABLE feedings ADD COLUMN drifter_name TEXT`);
+      await _db.exec(`ALTER TABLE feedings ADD COLUMN feeder_name TEXT`);
+    }
+
+    const hostingLogInfo = await _db.all(`PRAGMA table_info(hosting_log)`);
+    if (!hostingLogInfo.some(col => col.name === 'feeder_name')) {
+      await _db.exec(`ALTER TABLE hosting_log ADD COLUMN feeder_name TEXT`);
+    }
+  } catch (err) {
+    // Column might already exist or PRAGMA failed
+  }
 }

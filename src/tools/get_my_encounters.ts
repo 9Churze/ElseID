@@ -1,0 +1,31 @@
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { getMyEncounters } from "../storage/drifters.js";
+
+export function registerGetMyEncounters(server: McpServer) {
+  server.tool(
+    "get_my_encounters",
+    "View the log of strangers' drifters you have hosted and fed.",
+    {},
+    async () => {
+      const encounters = await getMyEncounters();
+
+      if (encounters.length === 0) {
+        return {
+          content: [{ type: "text", text: "You have not hosted any digital drifters yet. Your terminal waits quietly for the first signal." }],
+        };
+      }
+
+      let text = "📖 Your Encounters Log:\n\n";
+      for (const enc of encounters) {
+        const date = new Date(enc.fedAt * 1000).toLocaleString();
+        const drifterInfo = enc.drifterName ? `「${enc.drifterName}」` : `Drifter (${enc.drifterId.slice(0, 8)}...)`;
+        text += `- [${date}] Hosted ${drifterInfo} at ${enc.relay}\n`;
+        text += `  You shared (${enc.feedType}): "${enc.content}"\n\n`;
+      }
+
+      return {
+        content: [{ type: "text", text }],
+      };
+    }
+  );
+}

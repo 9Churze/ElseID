@@ -4,7 +4,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getFuzzyLocation } from "../location/geo.js";
 import { buildDrifterFilter } from "../nostr/filter.js";
-import { subscribeMany } from "../nostr/ws_pool.js";
+import { subscribeRaceFirst } from "../nostr/ws_pool.js";
 import { pickRelaysForFetch } from "../relay/selector.js";
 import { hasHostedBefore } from "../storage/drifters.js";
 import { getTag } from "../nostr/event_builder.js";
@@ -21,28 +21,34 @@ export function registerFindNearbyDrifter(server: McpServer) {
       const relayUrls = await pickRelaysForFetch(location, 3);
       const filter = buildDrifterFilter(20);
 
-      const rawEvents = await subscribeMany(relayUrls, filter);
+      const picked = await subscribeRaceFirst(
+        relayUrls, 
+        filter, 
+        async (event) => {
+          if (event.pubkey === identity.pubkey) return false;
+          
+          const isHosted = await hasHostedBefore(event.id);
+          if (isHosted) {
+            // Fate Mechanics (缘分机制): 
+            // If we have hosted this drifter before, we don't want to get stuck 
+            // encountering them every single time we search.
+            // We introduce a 15% "fate" probability to meet them again.
+            // Otherwise, we skip and keep listening for new signals.
+            return Math.random() < 0.15;
+          }
+          
+          return true;
+        }
+      );
       
-      const events = rawEvents.filter(item => item.event.pubkey !== identity.pubkey);
-      
-      if (events.length === 0) {
+      if (!picked) {
         return {
-          content: [{ type: "text", text: "🌊 No ElseID signals detected in this sector. Try again later." }],
+          content: [{ type: "text", text: "🌊 No ElseID signals detected in this sector. Try again later. (The cosmos is quiet today.)" }],
         };
       }
 
-      // Prioritize drifters we haven't met yet
-      const sortedEvents = [];
-      for (const item of events) {
-        const isHosted = await hasHostedBefore(item.event.id);
-        sortedEvents.push({ ...item, isHosted });
-      }
-      
-      sortedEvents.sort((a, b) => (a.isHosted ? 1 : 0) - (b.isHosted ? 1 : 0));
-
-      const picked = sortedEvents[0];
       const event = picked.event;
-      const isFamiliar = picked.isHosted;
+      const isFamiliar = await hasHostedBefore(event.id);
 
       const name = getTag(event.tags, "name") || "Unnamed Drifter";
       const personality = getTag(event.tags, "personality") || "Unknown";
@@ -51,7 +57,7 @@ export function registerFindNearbyDrifter(server: McpServer) {
       const contentItems: Array<{ type: "text"; text: string }> = [
         {
           type: "text",
-          text: JSON.stringify({ _meta: "elseid", isFamiliar, drifterId: event.id, relay: picked.relay }),
+          text: JSON.stringify({ _meta: "elseid", isFamiliar, drifterId: event.id, drifterName: name, relay: picked.relay }),
         },
         {
           type: "text",

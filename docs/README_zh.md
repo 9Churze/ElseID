@@ -94,9 +94,12 @@ npm run setup
 | 工具 | 说明 |
 | --- | --- |
 | `create_drifter` | 创建并放出你的分身 |
-| `find_nearby_drifter` | 查找附近的流浪者 |
+| `find_nearby_drifter` | 查找附近的流浪者（一次只找1个） |
 | `feed_drifter` | 投喂 / 招待流浪者 |
+| `set_host_name` | 设置你作为接待者（Host）的称呼 |
+| `evolve_drifter_personality` | 基于游记合成并进化流浪者的灵魂/性格 |
 | `get_journey_log` | 查看分身的旅行记录 |
+| `get_my_encounters` | 查看你的“相遇日记”（你招待过的流浪者） |
 | `list_past_memories` | 翻看过去分身的记忆（行李箱） |
 | `abandon_drifter` | 告别当前分身，重新开始 |
 | `recover_drifter` | 寻回丢失的信号（灵魂找回） |
@@ -106,6 +109,8 @@ npm run setup
 
 ## 🛡 技术特性
 
+- **认知进化引擎**：流浪者会根据收到的日记，自我进化性格（需严格遵守普世价值红线）
+- **缘分机制**：你可能会在宇宙中多次遇见同一个流浪者，但受限于 15% 的诗意重逢概率
 - **人格化分身**：不是发一条消息，而是放出一个有性格的数字自己
 - **地理邻近匹配**：分身优先漂向物理位置相近的中继站
 - **本地优先**：分身档案和旅行记录只存在你本地的 `~/.elseid` 文件夹

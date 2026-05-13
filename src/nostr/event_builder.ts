@@ -53,10 +53,11 @@ export interface FeedingBuildOptions {
   feedType:        string;
   content:         string;
   location:        FuzzyLocation;
+  hostName?:       string | null;
 }
 
 export function buildFeedingEvent(opts: FeedingBuildOptions): UnsignedEvent {
-  const { pubkey, drifterEventId, feedType, content, location } = opts;
+  const { pubkey, drifterEventId, feedType, content, location, hostName } = opts;
 
   const tags: string[][] = [
     ["type",      "feeding"],
@@ -64,6 +65,7 @@ export function buildFeedingEvent(opts: FeedingBuildOptions): UnsignedEvent {
     ["feed_type", feedType],
   ];
 
+  if (hostName) tags.push(["host_name", hostName]);
   if (location.country) tags.push(["country", location.country]);
   if (location.city)    tags.push(["city",    location.city]);
 

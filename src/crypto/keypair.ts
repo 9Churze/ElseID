@@ -25,10 +25,10 @@ function newKeypair(): { privkey: string; pubkey: string } {
 export async function getPrimaryIdentity(): Promise<Identity> {
   const db = getDb();
   const row = await db.get(`
-    SELECT pubkey, privkey, created_at, active_drifter_id
+    SELECT pubkey, privkey, created_at, active_drifter_id, host_name
     FROM identities
     LIMIT 1
-  `) as { pubkey: string; privkey: string; created_at: number; active_drifter_id: string | null } | undefined;
+  `) as { pubkey: string; privkey: string; created_at: number; active_drifter_id: string | null; host_name: string | null } | undefined;
 
   if (row) {
     return {
@@ -36,17 +36,18 @@ export async function getPrimaryIdentity(): Promise<Identity> {
       privkey: row.privkey,
       createdAt: row.created_at,
       activeDrifterId: row.active_drifter_id,
+      hostName: row.host_name,
     };
   }
 
   // Create new
   const { privkey, pubkey } = newKeypair();
-  const identity: Identity = { pubkey, privkey, createdAt: nowSec(), activeDrifterId: null };
+  const identity: Identity = { pubkey, privkey, createdAt: nowSec(), activeDrifterId: null, hostName: null };
 
   await db.run(`
-    INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id)
-    VALUES (?, ?, ?, ?)
-  `, [identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId]);
+    INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id, host_name)
+    VALUES (?, ?, ?, ?, ?)
+  `, [identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId, identity.hostName]);
 
   return identity;
 }
@@ -70,12 +71,12 @@ export async function rotateIdentity(): Promise<Identity> {
 
   // Insert fresh identity
   const { privkey, pubkey } = newKeypair();
-  const identity: Identity = { pubkey, privkey, createdAt: nowSec(), activeDrifterId: null };
+  const identity: Identity = { pubkey, privkey, createdAt: nowSec(), activeDrifterId: null, hostName: null };
 
   await db.run(`
-    INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id)
-    VALUES (?, ?, ?, ?)
-  `, [identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId]);
+    INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id, host_name)
+    VALUES (?, ?, ?, ?, ?)
+  `, [identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId, identity.hostName]);
 
   // Checkpoint WAL
   try { await db.exec("PRAGMA wal_checkpoint(TRUNCATE)"); } catch { }
@@ -104,12 +105,13 @@ export async function importKeypair(privkeyHex: string): Promise<Identity> {
     privkey: privkeyHex.toLowerCase(),
     createdAt: nowSec(),
     activeDrifterId: null,
+    hostName: null,
   };
 
   await db.run(`
-    INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id)
-    VALUES (?, ?, ?, ?)
-  `, [identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId]);
+    INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id, host_name)
+    VALUES (?, ?, ?, ?, ?)
+  `, [identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId, identity.hostName]);
 
   return identity;
 }

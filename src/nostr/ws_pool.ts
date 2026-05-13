@@ -162,6 +162,114 @@ export async function subscribeMany(
   return merged.sort((a, b) => b.event.created_at - a.event.created_at);
 }
 
+export async function subscribeRaceFirst(
+  relayUrls: string[],
+  filter: NostrFilter,
+  predicate: (event: NostrEvent) => boolean | Promise<boolean>,
+  timeoutMs = WS_TIMEOUT_MS * 2
+): Promise<{ event: NostrEvent; relay: string } | null> {
+  const abortController = new AbortController();
+  const subId = newSubId();
+  const now = Math.floor(Date.now() / 1000);
+
+  return new Promise(async (resolve) => {
+    let resolved = false;
+
+    const timer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        abortController.abort();
+        resolve(null);
+      }
+    }, timeoutMs);
+
+    const checkEvent = async (event: NostrEvent, relay: string) => {
+      if (resolved) return;
+      try {
+        const pass = await predicate(event);
+        if (pass && !resolved) {
+          resolved = true;
+          clearTimeout(timer);
+          abortController.abort();
+          resolve({ event, relay });
+        }
+      } catch {
+        // predicate failed
+      }
+    };
+
+    const promises = relayUrls.map(async (relayUrl) => {
+      let ws: WebSocket;
+      try {
+        ws = await getOrOpen(relayUrl);
+      } catch {
+        return;
+      }
+      
+      if (resolved) return;
+
+      const cleanup = () => {
+        ws.removeListener("message", onMessage);
+        ws.removeListener("close", onAbort);
+        ws.removeListener("error", onAbort);
+        try { ws.send(JSON.stringify(["CLOSE", subId])); } catch { /**/ }
+      };
+
+      const onAbort = () => cleanup();
+
+      const onMessage = (raw: WebSocket.RawData) => {
+        if (resolved) {
+          cleanup();
+          return;
+        }
+
+        let msg: unknown[];
+        try {
+          msg = JSON.parse(raw.toString()) as unknown[];
+        } catch { return; }
+
+        const [type, id, payload] = msg;
+
+        if (type === "EOSE" && id === subId) {
+          cleanup();
+          return;
+        }
+
+        if (type === "EVENT" && id === subId && isNostrEvent(payload)) {
+          const event = payload as NostrEvent;
+          if (!verifySignature(event)) return;
+
+          const ttlTag = event.tags.find(([k]) => k === "ttl")?.[1];
+          if (ttlTag && ttlTag !== "0") {
+            const ttlSec = parseInt(ttlTag, 10);
+            if (!isNaN(ttlSec) && event.created_at + ttlSec < now) return;
+          }
+
+          checkEvent(event, relayUrl);
+        }
+      };
+
+      ws.on("message", onMessage);
+      ws.on("close", onAbort);
+      ws.on("error", onAbort);
+      
+      abortController.signal.addEventListener("abort", cleanup);
+      
+      ws.send(JSON.stringify(["REQ", subId, filter]));
+    });
+
+    await Promise.allSettled(promises);
+    
+    // If all relays EOSE or error out before finding one
+    if (!resolved) {
+      resolved = true;
+      clearTimeout(timer);
+      abortController.abort();
+      resolve(null);
+    }
+  });
+}
+
 // Type guard
 
 function isNostrEvent(v: unknown): v is NostrEvent {

@@ -63,17 +63,19 @@ export async function getMyActiveDrifter(): Promise<Drifter | null> {
 
 // Feeding Persistence
 
-export async function saveOutgoingFeeding(feeding: Feeding): Promise<void> {
+export async function saveOutgoingFeeding(feeding: Feeding, drifterName?: string): Promise<void> {
   const db = getDb();
   await db.run(`
     INSERT OR IGNORE INTO feedings (
-      id, drifter_id, feeder_pubkey, feed_type, content,
+      id, drifter_id, drifter_name, feeder_pubkey, feeder_name, feed_type, content,
       location_country, location_city, fed_at, relay
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     feeding.id,
     feeding.drifterId,
+    drifterName ?? null,
     feeding.feederPubkey,
+    feeding.feederName ?? null,
     feeding.feedType,
     feeding.content,
     feeding.locationCountry ?? null,
@@ -95,13 +97,14 @@ export async function saveIncomingFeeding(feeding: Feeding): Promise<void> {
   const db = getDb();
   await db.run(`
     INSERT OR IGNORE INTO hosting_log (
-      id, drifter_id, feeder_pubkey, feed_type, content,
+      id, drifter_id, feeder_pubkey, feeder_name, feed_type, content,
       location_country, location_city, fed_at, relay
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `, [
     feeding.id,
     feeding.drifterId,
     feeding.feederPubkey,
+    feeding.feederName ?? null,
     feeding.feedType,
     feeding.content,
     feeding.locationCountry ?? null,
@@ -134,6 +137,14 @@ export async function getPastMemories(): Promise<{ drifter: Drifter, journey: Fe
   return result;
 }
 
+export async function getMyEncounters(): Promise<(Feeding & { drifterName?: string })[]> {
+  const db = getDb();
+  const rows = await db.all(`
+    SELECT * FROM feedings ORDER BY fed_at DESC
+  `) as any[];
+  return rows.map(rowToFeeding);
+}
+
 // Row mapping
 
 function rowToDrifter(row: any): Drifter {
@@ -153,11 +164,13 @@ function rowToDrifter(row: any): Drifter {
   };
 }
 
-function rowToFeeding(row: any): Feeding {
+function rowToFeeding(row: any): Feeding & { drifterName?: string } {
   return {
     id:              row.id,
     drifterId:       row.drifter_id,
+    drifterName:     row.drifter_name ?? undefined,
     feederPubkey:    row.feeder_pubkey,
+    feederName:      row.feeder_name ?? undefined,
     feedType:        row.feed_type as FeedType,
     content:         row.content,
     locationCountry: row.location_country ?? undefined,

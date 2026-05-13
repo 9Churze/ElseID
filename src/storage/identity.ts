@@ -23,6 +23,14 @@ export async function setCreationLock(locked: boolean): Promise<void> {
   `, [locked ? 1 : 0, identity.pubkey]);
 }
 
+export async function setHostName(name: string): Promise<void> {
+  const identity = await getPrimaryIdentity();
+  const db = getDb();
+  await db.run(`
+    UPDATE identities SET host_name = ? WHERE pubkey = ?
+  `, [name, identity.pubkey]);
+}
+
 export async function isCreating(): Promise<boolean> {
   const db = getDb();
   const row = await db.get(`SELECT is_creating FROM identities LIMIT 1`) as { is_creating: number } | undefined;

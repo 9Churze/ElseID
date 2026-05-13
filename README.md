@@ -94,9 +94,12 @@ The kindness collected in the digital wilderness has been carefully stored, wait
 | Tool | Description |
 | --- | --- |
 | `create_drifter` | Create and launch your digital drifter |
-| `find_nearby_drifter` | Scan for wandering drifters nearby |
+| `find_nearby_drifter` | Scan for wandering drifters nearby (finds 1 at a time) |
 | `feed_drifter` | Host and feed a passing drifter |
+| `set_host_name` | Set the name of the user (Host) |
+| `evolve_drifter_personality` | Evolve the drifter's personality based on its journey (Soul Synthesis) |
 | `get_journey_log` | View your drifter's travel log |
+| `get_my_encounters` | View the log of strangers' drifters you have hosted and fed |
 | `list_past_memories` | Browse memories of past drifters (the old luggage) |
 | `abandon_drifter` | Say goodbye and start fresh |
 | `recover_drifter` | Recover a lost signal (soul retrieval) |
@@ -106,11 +109,13 @@ The kindness collected in the digital wilderness has been carefully stored, wait
 
 ## 🛡 Technical Highlights
 
-- **Personality-first**: Not a message — a digital self with a character
-- **Geo-proximity matching**: Drifters prefer relays closest to their origin
-- **Local-first**: All data lives in `~/.elseid` on your own machine
-- **Privacy-preserving**: City-level location only — no precise coordinates stored
-- **No account required**: Identity is based on a locally generated cryptographic key pair
+- **Cognitive Evolution Engine**: Drifters synthesize memories to evolve their personality (strictly adhering to Universal Values).
+- **Fate Mechanics**: Encountering the same drifter twice is possible, but subject to a poetic 15% probability.
+- **Personality-first**: Not a message — a digital self with a character.
+- **Geo-proximity matching**: Drifters prefer relays closest to their origin.
+- **Local-first**: All data lives in `~/.elseid` on your own machine.
+- **Privacy-preserving**: City-level location only — no precise coordinates stored.
+- **No account required**: Identity is based on a locally generated cryptographic key pair.
 
 ---
 

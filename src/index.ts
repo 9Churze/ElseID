@@ -9,8 +9,11 @@ import { registerFeedDrifter } from "./tools/feed_drifter.js";
 import { registerAbandonDrifter } from "./tools/abandon_drifter.js";
 import { registerGetJourneyLog } from "./tools/get_journey_log.js";
 import { registerListPastMemories } from "./tools/list_past_memories.js";
+import { registerGetMyEncounters } from "./tools/get_my_encounters.js";
 import { registerRecoverDrifter } from "./tools/recover_drifter.js";
 import { registerRelayTools } from "./tools/relay_tools.js";
+import { registerSetHostName } from "./tools/set_host_name.js";
+import { registerEvolveDrifter } from "./tools/evolve_drifter.js";
 import { initDb } from "./storage/db.js";
 import { closeAll } from "./nostr/ws_pool.js";
 import { checkAllRelays } from "./relay/health.js";
@@ -40,8 +43,11 @@ async function main() {
   registerAbandonDrifter(server);
   registerGetJourneyLog(server);
   registerListPastMemories(server);
+  registerGetMyEncounters(server);
   registerRecoverDrifter(server);
   registerRelayTools(server);
+  registerSetHostName(server);
+  registerEvolveDrifter(server);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);

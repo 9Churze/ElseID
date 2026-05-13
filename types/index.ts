@@ -64,6 +64,7 @@ export interface Feeding {
   id: string;
   drifterId: string;
   feederPubkey: string;
+  feederName?: string;
   feedType: FeedType;
   content: string;
   locationCountry?: string;
@@ -113,6 +114,7 @@ export interface Identity {
   privkey: string;
   createdAt: number;
   activeDrifterId: string | null;
+  hostName: string | null;
 }
 
 // ── AI ───────────────────────────────────────────────────────

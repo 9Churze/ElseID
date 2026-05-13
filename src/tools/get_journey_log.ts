@@ -29,6 +29,7 @@ export function registerGetJourneyLog(server: McpServer) {
           id: item.event.id,
           drifterId: drifter.id,
           feederPubkey: item.event.pubkey,
+          feederName: getTag(item.event.tags, "host_name"),
           feedType: (getTag(item.event.tags, "feed_type") as any) || "other",
           content: item.event.content,
           locationCountry: getTag(item.event.tags, "country"),
@@ -59,7 +60,8 @@ export function registerGetJourneyLog(server: McpServer) {
         for (const f of localJourney) {
           const location = [f.locationCity, f.locationCountry].filter(Boolean).join(" · ") || "Unknown";
           const date = new Date(f.fedAt * 1000).toLocaleDateString();
-          report += `[${date}] ${location}: A Host shared ${f.feedType} -> "${f.content}"\n`;
+          const hostLabel = f.feederName ? `Host 「${f.feederName}」` : "A Host";
+          report += `[${date}] ${location}: ${hostLabel} shared ${f.feedType} -> "${f.content}"\n`;
         }
       }
 

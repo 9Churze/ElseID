@@ -13,6 +13,7 @@ import { checkContent } from "../ai/moderator.js";
 
 const schema = z.object({
   drifter_event_id: z.string().describe("The ID of the drifter you are feeding"),
+  drifter_name: z.string().optional().describe("The name of the drifter you are feeding"),
   feed_type: z.enum(["story", "food", "place", "other"]).describe("Type of feeding"),
   content: z.string().describe("Your story, recommendation, or message"),
   relay: z.string().url().describe("The relay where the drifter was found"),
@@ -41,6 +42,7 @@ export function registerFeedDrifter(server: McpServer) {
         feedType: input.feed_type,
         content: input.content,
         location,
+        hostName: identity.hostName,
       });
 
       const signed = signEvent(unsigned, identity.privkey);
@@ -57,13 +59,14 @@ export function registerFeedDrifter(server: McpServer) {
         id: signed.id,
         drifterId: input.drifter_event_id,
         feederPubkey: identity.pubkey,
+        feederName: identity.hostName ?? undefined,
         feedType: input.feed_type,
         content: input.content,
         locationCountry: location.country,
         locationCity: location.city,
         fedAt: signed.created_at,
         relay: input.relay,
-      });
+      }, input.drifter_name);
 
       return {
         content: [{

@@ -22,7 +22,7 @@ export function registerRecoverDrifter(server: McpServer) {
     "Recover wandering digital signals. Use this when the Butler senses you have a lost or orphaned drifter.",
     schema.shape,
     async (input) => {
-      const identity = getPrimaryIdentity();
+      const identity = await getPrimaryIdentity();
       
       // 1. Scan relays for drifter events by this pubkey
       const relayUrls = DEFAULT_RELAYS.map(r => r.url);
@@ -55,9 +55,9 @@ export function registerRecoverDrifter(server: McpServer) {
       const event = picked.event;
 
       // If we don't have it in local DB, reconstruct it
-      const local = getDrifter(event.id);
+      const local = await getDrifter(event.id);
       if (!local) {
-        saveMyDrifter({
+        await saveMyDrifter({
           id: event.id,
           pubkey: event.pubkey,
           name: getTag(event.tags, "name") || "Recovered Drifter",
@@ -71,7 +71,7 @@ export function registerRecoverDrifter(server: McpServer) {
       }
 
       // Set it as active
-      setActiveDrifter(event.id);
+      await setActiveDrifter(event.id);
 
       return {
         content: [{

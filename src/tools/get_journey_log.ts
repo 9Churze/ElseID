@@ -15,7 +15,7 @@ export function registerGetJourneyLog(server: McpServer) {
     "Query the current status and travel log of your active ElseID drifter.",
     {},
     async () => {
-      const drifter = getMyActiveDrifter();
+      const drifter = await getMyActiveDrifter();
       if (!drifter) {
         return {
           content: [{ type: "text", text: "🌌 Your drifter hasn't set sail yet. Tell the Butler what kind of drifter you want to create and let it wander." }],
@@ -27,7 +27,7 @@ export function registerGetJourneyLog(server: McpServer) {
       const remoteFeedings = await subscribeMany([drifter.relay], filter);
       
       for (const item of remoteFeedings) {
-        saveIncomingFeeding({
+        await saveIncomingFeeding({
           id: item.event.id,
           drifterId: drifter.id,
           feederPubkey: item.event.pubkey,
@@ -41,7 +41,7 @@ export function registerGetJourneyLog(server: McpServer) {
       }
 
       // 2. Load all journey records from hosting_log
-      const localJourney = getMyDrifterJourney(drifter.id);
+      const localJourney = await getMyDrifterJourney(drifter.id);
 
       const ageDays = Math.floor((Date.now() / 1000 - drifter.departedAt) / 86400);
       

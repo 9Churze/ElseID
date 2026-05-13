@@ -14,18 +14,17 @@ import type { RelayInfo }       from "../../types/index.js";
 /**
  * Ping a single relay by opening a WebSocket and timing
  * how long it takes to receive the first message or confirm open.
- * Checks writability by sending a minimal AUTH probe (no actual write).
  */
 export async function checkRelay(url: string): Promise<RelayInfo> {
   return new Promise((resolve) => {
     const start = Date.now();
     let settled = false;
 
-    const timeout = setTimeout(() => {
+    const timeout = setTimeout(async () => {
       if (!settled) {
         settled = true;
         ws.terminate();
-        persist({ url, online: false, latencyMs: null, writable: false });
+        await persist({ url, online: false, latencyMs: null, writable: false });
         resolve({ url, online: false, latencyMs: null, writable: false });
       }
     }, WS_TIMEOUT_MS);
@@ -34,28 +33,26 @@ export async function checkRelay(url: string): Promise<RelayInfo> {
 
     ws.once("open", () => {
       const latencyMs = Date.now() - start;
-      // Send a REQ with no filters to check read access
       ws.send(JSON.stringify(["REQ", "health-probe", { kinds: [7777], limit: 1 }]));
 
-      // Give the relay 1 s to respond
-      setTimeout(() => {
+      setTimeout(async () => {
         if (!settled) {
           settled = true;
           clearTimeout(timeout);
           ws.close();
           const info: RelayInfo = { url, online: true, latencyMs, writable: true };
-          persist(info);
+          await persist(info);
           resolve(info);
         }
       }, 1_000);
     });
 
-    ws.once("error", (err: Error) => {
+    ws.once("error", async (err: Error) => {
       if (!settled) {
         settled = true;
         clearTimeout(timeout);
         const info: RelayInfo = { url, online: false, latencyMs: null, writable: false };
-        persist(info);
+        await persist(info);
         resolve(info);
       }
     });
@@ -64,10 +61,6 @@ export async function checkRelay(url: string): Promise<RelayInfo> {
 
 // ── Batch check ──────────────────────────────────────────────
 
-/**
- * Check all known relays in parallel. Returns results sorted
- * by latency (online first, then by speed).
- */
 export async function checkAllRelays(): Promise<RelayInfo[]> {
   const urls    = DEFAULT_RELAYS.map((r) => r.url);
   const results = await Promise.all(urls.map(checkRelay));
@@ -82,14 +75,14 @@ export async function checkAllRelays(): Promise<RelayInfo[]> {
 
 /**
  * Return all relay info from the local cache (relay_stats table).
- * Rows that have never been checked are omitted.
  */
-export function getCachedRelayInfo(): RelayInfo[] {
-  const rows = getDb().prepare(`
+export async function getCachedRelayInfo(): Promise<RelayInfo[]> {
+  const db = getDb();
+  const rows = await db.all(`
     SELECT url, online, latency_ms, writable, last_check
     FROM relay_stats
     ORDER BY online DESC, latency_ms ASC
-  `).all() as {
+  `) as {
     url: string; online: number; latency_ms: number | null;
     writable: number; last_check: number;
   }[];
@@ -104,24 +97,20 @@ export function getCachedRelayInfo(): RelayInfo[] {
 
 /**
  * Return online, writable relays.
- * Triggers a background refresh if data is stale (> HEALTH_CHECK_INTERVAL_MS).
  */
-export function getHealthyRelays(): RelayInfo[] {
-  const cached = getCachedRelayInfo();
+export async function getHealthyRelays(): Promise<RelayInfo[]> {
+  const cached = await getCachedRelayInfo();
+  const db = getDb();
 
   // Refresh stale data in background
   const staleThreshold = Math.floor(Date.now() / 1000) - HEALTH_CHECK_INTERVAL_MS / 1000;
-  const row = getDb().prepare(
-    `SELECT MAX(last_check) AS lc FROM relay_stats`
-  ).get() as { lc: number | null };
+  const row = await db.get(`SELECT MAX(last_check) AS lc FROM relay_stats`) as { lc: number | null };
 
   if (!row?.lc || row.lc < staleThreshold) {
-    // Fire and forget
-    checkAllRelays().catch(() => {/* background refresh — ignore errors */});
+    checkAllRelays().catch(() => {});
   }
 
   const healthy = cached.filter((r) => r.online && r.writable);
-  // Fallback: if cache is empty, return default list optimistically
   if (healthy.length === 0) {
     return DEFAULT_RELAYS
       .filter((r) => r.writable)
@@ -133,9 +122,10 @@ export function getHealthyRelays(): RelayInfo[] {
 
 // ── Persistence ───────────────────────────────────────────────
 
-function persist(info: RelayInfo): void {
+async function persist(info: RelayInfo): Promise<void> {
+  const db = getDb();
   const now = Math.floor(Date.now() / 1000);
-  getDb().prepare(`
+  await db.run(`
     INSERT INTO relay_stats (url, online, latency_ms, writable, last_check)
     VALUES (?, ?, ?, ?, ?)
     ON CONFLICT(url) DO UPDATE SET
@@ -143,11 +133,11 @@ function persist(info: RelayInfo): void {
       latency_ms = excluded.latency_ms,
       writable   = excluded.writable,
       last_check = excluded.last_check
-  `).run(
+  `, [
     info.url,
     info.online ? 1 : 0,
     info.latencyMs ?? null,
     info.writable ? 1 : 0,
     now
-  );
+  ]);
 }

@@ -5,27 +5,27 @@
 
 import { getHealthyRelays } from "./health.js";
 import { DEFAULT_RELAYS }   from "../../config/relays.js";
-import type { RelayInfo, FuzzyLocation } from "../../types/index.js";
+import type { FuzzyLocation } from "../../types/index.js";
 
 /**
  * Pick the best relay for a drifter based on geographic proximity.
  */
-export function pickRelayByGeo(location: FuzzyLocation): string {
-  const healthy = getHealthyRelays();
+export async function pickRelayByGeo(location: FuzzyLocation): Promise<string> {
+  const healthy = await getHealthyRelays();
   
   // 1. Try to find a relay in the same country/region
   const regionMatch = healthy.find(r => r.region === location.country);
   if (regionMatch) return regionMatch.url;
 
   // 2. Fall back to weighted random pick (latency-based)
-  return pickRelay();
+  return await pickRelay();
 }
 
 /**
  * Pick the single best relay for sending a new drifter (fallback strategy).
  */
-export function pickRelay(preferredUrl?: string): string {
-  const healthy = getHealthyRelays();
+export async function pickRelay(preferredUrl?: string): Promise<string> {
+  const healthy = await getHealthyRelays();
 
   if (preferredUrl) {
     const match = healthy.find((r) => r.url === preferredUrl);
@@ -52,8 +52,8 @@ export function pickRelay(preferredUrl?: string): string {
 /**
  * For find_nearby_drifter: prioritize relays in the same country/region.
  */
-export function pickRelaysForFetch(location: FuzzyLocation, count = 3): string[] {
-  const healthy = getHealthyRelays();
+export async function pickRelaysForFetch(location: FuzzyLocation, count = 3): Promise<string[]> {
+  const healthy = await getHealthyRelays();
 
   // Sort healthy relays: matches country/region first, then others
   const sorted = [...healthy].sort((a, b) => {

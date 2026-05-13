@@ -16,9 +16,9 @@ function nowSec(): number {
 }
 
 function newKeypair(): { privkey: string; pubkey: string } {
-  const secretBytes = generateSecretKey();       // Uint8Array (32 bytes)
+  const secretBytes = generateSecretKey();       
   const privkey     = bytesToHex(secretBytes);
-  const pubkey      = getPublicKey(secretBytes); // hex pubkey
+  const pubkey      = getPublicKey(secretBytes); 
   return { privkey, pubkey };
 }
 
@@ -27,12 +27,13 @@ function newKeypair(): { privkey: string; pubkey: string } {
 /**
  * Get the current primary identity, or create one if none exists.
  */
-export function getPrimaryIdentity(): Identity {
-  const row = getDb().prepare(`
+export async function getPrimaryIdentity(): Promise<Identity> {
+  const db = getDb();
+  const row = await db.get(`
     SELECT pubkey, privkey, created_at, active_drifter_id
     FROM identities
     LIMIT 1
-  `).get() as { pubkey: string; privkey: string; created_at: number; active_drifter_id: string | null } | undefined;
+  `) as { pubkey: string; privkey: string; created_at: number; active_drifter_id: string | null } | undefined;
 
   if (row) {
     return {
@@ -47,10 +48,10 @@ export function getPrimaryIdentity(): Identity {
   const { privkey, pubkey } = newKeypair();
   const identity: Identity  = { pubkey, privkey, createdAt: nowSec(), activeDrifterId: null };
 
-  getDb().prepare(`
+  await db.run(`
     INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id)
     VALUES (?, ?, ?, ?)
-  `).run(identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId);
+  `, [identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId]);
 
   return identity;
 }
@@ -58,40 +59,37 @@ export function getPrimaryIdentity(): Identity {
 /**
  * Set the active drifter ID for the primary identity.
  */
-export function setActiveDrifter(drifterId: string | null): void {
-  const identity = getPrimaryIdentity();
-  getDb().prepare(`
+export async function setActiveDrifter(drifterId: string | null): Promise<void> {
+  const db = getDb();
+  const identity = await getPrimaryIdentity();
+  await db.run(`
     UPDATE identities SET active_drifter_id = ? WHERE pubkey = ?
-  `).run(drifterId, identity.pubkey);
+  `, [drifterId, identity.pubkey]);
 }
 
 /**
  * Rotate the identity: create a brand-new primary keypair.
- * Used when abandoning a drifter to ensure a fresh start.
- *
- * Security: before deletion, the old private key is overwritten with
- * cryptographically random bytes.  This makes WAL-based recovery of
- * the original key significantly harder.
  */
-export function rotateIdentity(): Identity {
+export async function rotateIdentity(): Promise<Identity> {
+  const db = getDb();
   // ── Step 1: Shred the old private key in-place ──────────────
-  const scrub = bytesToHex(generateSecretKey()); // 64 random hex chars
-  getDb().prepare(`UPDATE identities SET privkey = ?`).run(scrub);
+  const scrub = bytesToHex(generateSecretKey()); 
+  await db.run(`UPDATE identities SET privkey = ?`, [scrub]);
 
   // ── Step 2: Delete the now-worthless row ─────────────────────
-  getDb().prepare(`DELETE FROM identities`).run();
+  await db.run(`DELETE FROM identities`);
 
   // ── Step 3: Insert fresh identity ───────────────────────────
   const { privkey, pubkey } = newKeypair();
   const identity: Identity  = { pubkey, privkey, createdAt: nowSec(), activeDrifterId: null };
 
-  getDb().prepare(`
+  await db.run(`
     INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id)
     VALUES (?, ?, ?, ?)
-  `).run(identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId);
+  `, [identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId]);
 
-  // ── Step 4: Checkpoint WAL to collapse overwrite into main DB
-  try { getDb().pragma("wal_checkpoint(TRUNCATE)"); } catch { /* non-fatal */ }
+  // ── Step 4: Checkpoint WAL
+  try { await db.exec("PRAGMA wal_checkpoint(TRUNCATE)"); } catch { }
 
   return identity;
 }
@@ -99,15 +97,16 @@ export function rotateIdentity(): Identity {
 /**
  * Export keypair for backup.
  */
-export function exportKeypair(): { pubkey: string; privkey: string } | null {
-  const identity = getPrimaryIdentity();
+export async function exportKeypair(): Promise<{ pubkey: string; privkey: string } | null> {
+  const identity = await getPrimaryIdentity();
   return { pubkey: identity.pubkey, privkey: identity.privkey };
 }
 
 /**
  * Import a keypair from backup.
  */
-export function importKeypair(privkeyHex: string): Identity {
+export async function importKeypair(privkeyHex: string): Promise<Identity> {
+  const db = getDb();
   if (!/^[0-9a-f]{64}$/i.test(privkeyHex)) {
     throw new Error("Invalid private key: must be 64-char hex");
   }
@@ -116,7 +115,7 @@ export function importKeypair(privkeyHex: string): Identity {
   const pubkey      = getPublicKey(secretBytes);
   
   // Clear old
-  getDb().prepare(`DELETE FROM identities`).run();
+  await db.run(`DELETE FROM identities`);
 
   const identity: Identity = {
     pubkey,
@@ -125,10 +124,10 @@ export function importKeypair(privkeyHex: string): Identity {
     activeDrifterId: null,
   };
 
-  getDb().prepare(`
+  await db.run(`
     INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id)
     VALUES (?, ?, ?, ?)
-  `).run(identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId);
+  `, [identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId]);
 
   return identity;
 }

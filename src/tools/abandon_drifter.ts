@@ -27,7 +27,7 @@ export function registerAbandonDrifter(server: McpServer) {
         };
       }
 
-      const drifter = getMyActiveDrifter();
+      const drifter = await getMyActiveDrifter();
       if (!drifter) {
         return {
           content: [{ type: "text", text: "❌ You don't have an active drifter to abandon." }],
@@ -35,7 +35,7 @@ export function registerAbandonDrifter(server: McpServer) {
         };
       }
 
-      const identity = getPrimaryIdentity();
+      const identity = await getPrimaryIdentity();
       
       // 1. Send NIP-09 deletion request
       const deletionEvent = buildDeletionEvent(identity.pubkey, [drifter.id], "User decided to start fresh.");
@@ -43,14 +43,13 @@ export function registerAbandonDrifter(server: McpServer) {
       await broadcast(signedDeletion, drifter.relay);
 
       // 2. Update local storage: mark drifter as abandoned
-      updateDrifterStatus(drifter.id, "abandoned", Math.floor(Date.now() / 1000));
+      await updateDrifterStatus(drifter.id, "abandoned", Math.floor(Date.now() / 1000));
 
-      // 3. Explicitly clear active_drifter_id before rotation to close the
-      //    timing window where getMyActiveDrifter() could still resolve.
-      setActiveDrifter(null);
+      // 3. Explicitly clear active_drifter_id before rotation
+      await setActiveDrifter(null);
 
       // 4. Rotate identity (fresh start + key shredding)
-      rotateIdentity();
+      await rotateIdentity();
 
       return {
         content: [{

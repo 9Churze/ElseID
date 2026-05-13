@@ -9,7 +9,6 @@ import { getFuzzyLocation } from "../location/geo.js";
 import { getPrimaryIdentity } from "../storage/identity.js";
 import { buildFeedingEvent } from "../nostr/event_builder.js";
 import { signEvent } from "../nostr/event_signer.js";
-import { pickRelay } from "../relay/selector.js";
 import { broadcast } from "../relay/broadcaster.js";
 import { saveOutgoingFeeding } from "../storage/drifters.js";
 import { checkContent } from "../ai/moderator.js";
@@ -36,7 +35,7 @@ export function registerFeedDrifter(server: McpServer) {
       }
 
       const location = await getFuzzyLocation();
-      const identity = getPrimaryIdentity();
+      const identity = await getPrimaryIdentity();
 
       const unsigned = buildFeedingEvent({
         pubkey: identity.pubkey,
@@ -56,7 +55,7 @@ export function registerFeedDrifter(server: McpServer) {
         };
       }
 
-      saveOutgoingFeeding({
+      await saveOutgoingFeeding({
         id: signed.id,
         drifterId: input.drifter_event_id,
         feederPubkey: identity.pubkey,

@@ -17,7 +17,7 @@ export function registerRelayTools(server: McpServer) {
     "List all known relays with their cached online status and latency. Triggers a background refresh if data is stale.",
     {},
     async () => {
-      const relays = getCachedRelayInfo();
+      const relays = await getCachedRelayInfo();
 
       if (relays.length === 0) {
         // No cache yet — run a fresh check
@@ -56,7 +56,7 @@ export function registerRelayTools(server: McpServer) {
     "Let the system pick the best available relay for your next create_drifter call.",
     {},
     async () => {
-      const url = pickRelay();
+      const url = await pickRelay();
       return {
         content: [{
           type: "text",
@@ -98,7 +98,6 @@ function formatRelayList(relays: RelayInfo[]): string {
     const status  = r.online   ? "🟢" : "🔴";
     const write   = r.writable ? "✍️ " : "👁️ ";
     const latency = r.latencyMs !== null ? `${r.latencyMs}ms`.padStart(6) : "  —  ";
-    // Show region label instead of raw URL to preserve world-language aesthetic.
     const label = r.region ? `[${r.region}] Relay Station ${i + 1}` : `Relay Station ${i + 1}`;
     return `  ${status} ${write} ${latency}  ${label}`;
   });

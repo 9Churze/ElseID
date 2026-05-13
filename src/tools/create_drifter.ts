@@ -26,10 +26,11 @@ export function registerCreateDrifter(server: McpServer) {
     "Create and launch your ElseID drifter. As the Butler, you are responsible for extracting the core trait and personality tags from the user's description before calling this tool.",
     schema.shape,
     async (input) => {
-      const identity = getPrimaryIdentity();
+      const identity = await getPrimaryIdentity();
+      const creating = await isCreating();
       
       // 1. Check for existing drifter or active lock
-      if (identity.activeDrifterId || isCreating()) {
+      if (identity.activeDrifterId || creating) {
         return {
           content: [{ type: "text", text: "❌ You already have a drifter on a journey or in the process of launching. Please wait." }],
           isError: true,
@@ -37,7 +38,7 @@ export function registerCreateDrifter(server: McpServer) {
       }
 
       // 2. Lock creation process
-      setCreationLock(true);
+      await setCreationLock(true);
 
       try {
         const location = await getFuzzyLocation();
@@ -55,7 +56,7 @@ export function registerCreateDrifter(server: McpServer) {
         });
 
         const signed = signEvent(unsigned, identity.privkey);
-        const relayUrl = pickRelayByGeo(location);
+        const relayUrl = await pickRelayByGeo(location);
         const result = await broadcast(signed, relayUrl);
 
         if (!result.success) {
@@ -65,7 +66,7 @@ export function registerCreateDrifter(server: McpServer) {
           };
         }
 
-        saveMyDrifter({
+        await saveMyDrifter({
           id: signed.id,
           pubkey: signed.pubkey,
           name: input.name,
@@ -77,7 +78,7 @@ export function registerCreateDrifter(server: McpServer) {
           status: "roaming",
         });
 
-        setActiveDrifter(signed.id);
+        await setActiveDrifter(signed.id);
 
         return {
           content: [{
@@ -89,7 +90,7 @@ export function registerCreateDrifter(server: McpServer) {
         };
       } finally {
         // 3. Unlock creation process
-        setCreationLock(false);
+        await setCreationLock(false);
       }
     }
   );

@@ -4,20 +4,21 @@
 // ============================================================
 
 import { getDb } from "./db.js";
-import type { Drifter, Feeding, HostingLog, DrifterStatus, FeedType } from "../../types/index.js";
+import type { Drifter, Feeding, DrifterStatus, FeedType } from "../../types/index.js";
 
 // ── Drifter Persistence ────────────────────────────────────────
 
 /**
  * Save our own created drifter.
  */
-export function saveMyDrifter(drifter: Drifter): void {
-  getDb().prepare(`
+export async function saveMyDrifter(drifter: Drifter): Promise<void> {
+  const db = getDb();
+  await db.run(`
     INSERT INTO drifters (
       id, pubkey, name, personality, trait, tags,
       relay, departed_at, status
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
+  `, [
     drifter.id,
     drifter.pubkey,
     drifter.name,
@@ -27,42 +28,46 @@ export function saveMyDrifter(drifter: Drifter): void {
     drifter.relay,
     drifter.departedAt,
     drifter.status
-  );
+  ]);
 }
 
 /**
  * Update drifter status.
  */
-export function updateDrifterStatus(id: string, status: DrifterStatus, abandonedAt?: number): void {
+export async function updateDrifterStatus(id: string, status: DrifterStatus, abandonedAt?: number): Promise<void> {
+  const db = getDb();
   if (abandonedAt) {
-    getDb().prepare(`UPDATE drifters SET status = ?, abandoned_at = ? WHERE id = ?`).run(status, abandonedAt, id);
+    await db.run(`UPDATE drifters SET status = ?, abandoned_at = ? WHERE id = ?`, [status, abandonedAt, id]);
   } else {
-    getDb().prepare(`UPDATE drifters SET status = ? WHERE id = ?`).run(status, id);
+    await db.run(`UPDATE drifters SET status = ? WHERE id = ?`, [status, id]);
   }
 }
 
 /**
  * Update drifter last seen info.
  */
-export function updateDrifterPresence(id: string, location: string, timestamp: number): void {
-  getDb().prepare(`
+export async function updateDrifterPresence(id: string, location: string, timestamp: number): Promise<void> {
+  const db = getDb();
+  await db.run(`
     UPDATE drifters SET last_seen_loc = ?, last_seen_at = ? WHERE id = ?
-  `).run(location, timestamp, id);
+  `, [location, timestamp, id]);
 }
 
-export function getDrifter(id: string): Drifter | null {
-  const row = getDb().prepare(`SELECT * FROM drifters WHERE id = ?`).get(id) as any;
+export async function getDrifter(id: string): Promise<Drifter | null> {
+  const db = getDb();
+  const row = await db.get(`SELECT * FROM drifters WHERE id = ?`, [id]) as any;
   if (!row) return null;
   return rowToDrifter(row);
 }
 
-export function getMyActiveDrifter(): Drifter | null {
-  const row = getDb().prepare(`
+export async function getMyActiveDrifter(): Promise<Drifter | null> {
+  const db = getDb();
+  const row = await db.get(`
     SELECT d.* FROM drifters d
     JOIN identities i ON d.id = i.active_drifter_id
     WHERE d.status = 'roaming'
     LIMIT 1
-  `).get() as any;
+  `) as any;
   if (!row) return null;
   return rowToDrifter(row);
 }
@@ -72,13 +77,14 @@ export function getMyActiveDrifter(): Drifter | null {
 /**
  * Save an interaction where I hosted/fed someone else's drifter.
  */
-export function saveOutgoingFeeding(feeding: Feeding): void {
-  getDb().prepare(`
+export async function saveOutgoingFeeding(feeding: Feeding): Promise<void> {
+  const db = getDb();
+  await db.run(`
     INSERT OR IGNORE INTO feedings (
       id, drifter_id, feeder_pubkey, feed_type, content,
       location_country, location_city, fed_at, relay
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
+  `, [
     feeding.id,
     feeding.drifterId,
     feeding.feederPubkey,
@@ -88,14 +94,15 @@ export function saveOutgoingFeeding(feeding: Feeding): void {
     feeding.locationCity ?? null,
     feeding.fedAt,
     feeding.relay
-  );
+  ]);
 }
 
 /**
  * Check if I have already hosted/fed a specific drifter.
  */
-export function hasHostedBefore(drifterId: string): boolean {
-  const row = getDb().prepare(`SELECT 1 FROM feedings WHERE drifter_id = ?`).get(drifterId);
+export async function hasHostedBefore(drifterId: string): Promise<boolean> {
+  const db = getDb();
+  const row = await db.get(`SELECT 1 FROM feedings WHERE drifter_id = ?`, [drifterId]);
   return !!row;
 }
 
@@ -104,13 +111,14 @@ export function hasHostedBefore(drifterId: string): boolean {
 /**
  * Save a record of my own drifter being hosted/fed.
  */
-export function saveIncomingFeeding(feeding: Feeding): void {
-  getDb().prepare(`
+export async function saveIncomingFeeding(feeding: Feeding): Promise<void> {
+  const db = getDb();
+  await db.run(`
     INSERT OR IGNORE INTO hosting_log (
       id, drifter_id, feeder_pubkey, feed_type, content,
       location_country, location_city, fed_at, relay
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
+  `, [
     feeding.id,
     feeding.drifterId,
     feeding.feederPubkey,
@@ -120,26 +128,30 @@ export function saveIncomingFeeding(feeding: Feeding): void {
     feeding.locationCity ?? null,
     feeding.fedAt,
     feeding.relay
-  );
+  ]);
 }
 
-export function getMyDrifterJourney(drifterId: string): Feeding[] {
-  const rows = getDb().prepare(`
+export async function getMyDrifterJourney(drifterId: string): Promise<Feeding[]> {
+  const db = getDb();
+  const rows = await db.all(`
     SELECT * FROM hosting_log WHERE drifter_id = ? ORDER BY fed_at DESC
-  `).all(drifterId) as any[];
+  `, [drifterId]) as any[];
   return rows.map(rowToFeeding);
 }
 
-export function getPastMemories(): { drifter: Drifter, journey: Feeding[] }[] {
-  const drifters = getDb().prepare(`
+export async function getPastMemories(): Promise<{ drifter: Drifter, journey: Feeding[] }[]> {
+  const db = getDb();
+  const drifters = await db.all(`
     SELECT * FROM drifters WHERE status = 'abandoned' ORDER BY abandoned_at DESC
-  `).all() as any[];
+  `) as any[];
 
-  return drifters.map(row => {
+  const result = [];
+  for (const row of drifters) {
     const drifter = rowToDrifter(row);
-    const journey = getMyDrifterJourney(drifter.id);
-    return { drifter, journey };
-  });
+    const journey = await getMyDrifterJourney(drifter.id);
+    result.push({ drifter, journey });
+  }
+  return result;
 }
 
 // ── Row mapping ───────────────────────────────────────────────

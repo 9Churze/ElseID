@@ -1,8 +1,9 @@
 // ============================================================
-// Local Storage — SQLite Initialization
+// Local Storage — SQLite Initialization (Async Version)
 // ============================================================
 
-import Database from "better-sqlite3";
+import { open, Database } from "sqlite";
+import sqlite3 from "sqlite3";
 import path from "path";
 import os from "os";
 import fs from "fs";
@@ -10,69 +11,70 @@ import fs from "fs";
 const DATA_DIR = process.env.ELSEID_DATA_DIR || path.join(os.homedir(), ".elseid");
 const DB_PATH  = path.join(DATA_DIR, "elseid.db");
 
-// 确保数据目录存在
+// Ensure data directory exists
 try {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 } catch (err) {
-  console.warn(`⚠️ 无法创建数据目录 ${DATA_DIR}, 将尝试使用当前目录下的 .elseid_temp`);
-  const fallbackDir = path.join(process.cwd(), ".elseid_temp");
-  if (!fs.existsSync(fallbackDir)) fs.mkdirSync(fallbackDir);
-  // 这里不更新常量，但给开发者一个明确的信号
+  console.warn(`⚠️ Failed to create data directory ${DATA_DIR}, using fallback.`);
 }
 
-let _db: Database.Database | null = null;
+let _db: Database | null = null;
 
-export function getDb(): Database.Database {
+export function getDb(): Database {
   if (!_db) throw new Error("DB not initialized. Call initDb() first.");
   return _db;
 }
 
 export async function initDb(): Promise<void> {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  _db = new Database(DB_PATH);
-  _db.pragma("journal_mode = WAL");
-  _db.pragma("foreign_keys = ON");
+  // Use sqlite3.Database as the driver
+  _db = await open({
+    filename: DB_PATH,
+    driver: sqlite3.Database
+  });
 
-  _db.exec(`
+  await _db.exec("PRAGMA journal_mode = WAL");
+  await _db.exec("PRAGMA foreign_keys = ON");
+
+  await _db.exec(`
     CREATE TABLE IF NOT EXISTS drifters (
-      id            TEXT PRIMARY KEY,        -- 分身的 Nostr Event ID
-      pubkey        TEXT NOT NULL,           -- 主人的公钥
-      name          TEXT NOT NULL,           -- 分身名称
-      personality   TEXT NOT NULL,           -- 性格描述
-      trait         TEXT,                    -- AI从性格中提取的核心特征
-      tags          TEXT,                    -- JSON数组
-      relay         TEXT NOT NULL,           -- 出发中继站URL
-      departed_at   INTEGER NOT NULL,        -- 出发时间
+      id            TEXT PRIMARY KEY,        -- Nostr Event ID
+      pubkey        TEXT NOT NULL,           -- Owner's pubkey
+      name          TEXT NOT NULL,           -- Drifter name
+      personality   TEXT NOT NULL,           -- Personality description
+      trait         TEXT,                    -- Extracted core trait
+      tags          TEXT,                    -- JSON array
+      relay         TEXT NOT NULL,           -- Origin relay URL
+      departed_at   INTEGER NOT NULL,        -- Departure time
       status        TEXT DEFAULT 'roaming',  -- roaming | resting | returned | abandoned
-      abandoned_at  INTEGER,                 -- 放弃时间
-      last_seen_at  INTEGER,                 -- 最近一次被接待的时间
-      last_seen_loc TEXT                     -- 最近位置
+      abandoned_at  INTEGER,                 -- Retirement time
+      last_seen_at  INTEGER,                 -- Last host time
+      last_seen_loc TEXT                     -- Last city
     );
 
     CREATE TABLE IF NOT EXISTS feedings (
-      id              TEXT PRIMARY KEY,      -- 投喂事件的 Nostr Event ID
-      drifter_id      TEXT NOT NULL,         -- 我投喂的那个分身 ID
-      feeder_pubkey   TEXT NOT NULL,         -- 我的公钥
-      feed_type       TEXT NOT NULL,         -- story | food | place | other
-      content         TEXT NOT NULL,         -- 投喂内容
-      location_country TEXT,                 -- 我的位置（国家）
-      location_city    TEXT,                 -- 我的位置（城市）
-      fed_at          INTEGER NOT NULL,      -- 投喂时间
-      relay           TEXT NOT NULL          -- 投喂事件所在中继站
+      id              TEXT PRIMARY KEY,      
+      drifter_id      TEXT NOT NULL,         
+      feeder_pubkey   TEXT NOT NULL,         
+      feed_type       TEXT NOT NULL,         
+      content         TEXT NOT NULL,         
+      location_country TEXT,                 
+      location_city    TEXT,                 
+      fed_at          INTEGER NOT NULL,      
+      relay           TEXT NOT NULL          
     );
 
     CREATE TABLE IF NOT EXISTS hosting_log (
-      id              TEXT PRIMARY KEY,      -- 投喂事件的 Nostr Event ID
-      drifter_id      TEXT NOT NULL,         -- 我的分身 ID
-      feeder_pubkey   TEXT NOT NULL,         -- 投喂我的那个人的公钥
-      feed_type       TEXT NOT NULL,         -- story | food | place | other
-      content         TEXT NOT NULL,         -- 投喂内容
-      location_country TEXT,                 -- 对方的位置（国家）
-      location_city    TEXT,                 -- 对方的位置（城市）
-      fed_at          INTEGER NOT NULL,      -- 被投喂时间
-      relay           TEXT NOT NULL          -- 投喂事件所在中继站
+      id              TEXT PRIMARY KEY,      
+      drifter_id      TEXT NOT NULL,         
+      feeder_pubkey   TEXT NOT NULL,         
+      feed_type       TEXT NOT NULL,         
+      content         TEXT NOT NULL,         
+      location_country TEXT,                 
+      location_city    TEXT,                 
+      fed_at          INTEGER NOT NULL,      
+      relay           TEXT NOT NULL          
     );
 
     CREATE TABLE IF NOT EXISTS identities (
@@ -92,20 +94,11 @@ export async function initDb(): Promise<void> {
     );
   `);
 
-  // Purge logic for drifters (e.g. clean up abandoned if needed, though doc says permanent)
-  // For now, no automatic purge like bottles.
+  // Schema migration
+  try {
+    await _db.exec(`ALTER TABLE identities ADD COLUMN is_creating INTEGER DEFAULT 0`);
+  } catch { /* safe to ignore if exists */ }
 
-  // E-03: Schema migration — safely add columns that may not exist in older DBs.
-  // ALTER TABLE ignores errors if the column already exists via the try/catch pattern.
-  const migrations: string[] = [
-    `ALTER TABLE identities ADD COLUMN is_creating INTEGER DEFAULT 0`,
-  ];
-  for (const sql of migrations) {
-    try { _db.prepare(sql).run(); } catch { /* column already exists — safe to ignore */ }
-  }
-
-  // S-02 fix: Reset any stale creation lock that may have been left behind by a
-  // previous crash.  The lock is only meaningful within a single server session,
-  // so it must always be cleared on startup.
-  _db.prepare(`UPDATE identities SET is_creating = 0 WHERE is_creating = 1`).run();
+  // Reset stale creation locks
+  await _db.run(`UPDATE identities SET is_creating = 0 WHERE is_creating = 1`);
 }

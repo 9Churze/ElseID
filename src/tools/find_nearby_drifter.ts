@@ -19,8 +19,8 @@ export function registerFindNearbyDrifter(server: McpServer) {
     {},
     async () => {
       const location = await getFuzzyLocation();
-      const identity = getPrimaryIdentity();
-      const relayUrls = pickRelaysForFetch(location, 3);
+      const identity = await getPrimaryIdentity();
+      const relayUrls = await pickRelaysForFetch(location, 3);
       const filter = buildDrifterFilter(20);
 
       const rawEvents = await subscribeMany(relayUrls, filter);
@@ -34,22 +34,22 @@ export function registerFindNearbyDrifter(server: McpServer) {
       }
 
       // Prioritize drifters we haven't met yet
-      const sortedEvents = [...events].sort((a, b) => {
-        const aHosted = hasHostedBefore(a.event.id) ? 1 : 0;
-        const bHosted = hasHostedBefore(b.event.id) ? 1 : 0;
-        return aHosted - bHosted; // 0 (new) before 1 (hosted)
-      });
+      const sortedEvents = [];
+      for (const item of events) {
+        const isHosted = await hasHostedBefore(item.event.id);
+        sortedEvents.push({ ...item, isHosted });
+      }
+      
+      sortedEvents.sort((a, b) => (a.isHosted ? 1 : 0) - (b.isHosted ? 1 : 0));
 
       const picked = sortedEvents[0];
       const event = picked.event;
-      const isFamiliar = hasHostedBefore(event.id);
+      const isFamiliar = picked.isHosted;
 
       const name = getTag(event.tags, "name") || "Unnamed Drifter";
       const personality = getTag(event.tags, "personality") || "Unknown";
       const origin = [getTag(event.tags, "city"), getTag(event.tags, "country")].filter(Boolean).join(", ") || "Corner of the world";
 
-      // S-04 fix: Convey isFamiliar via a structured metadata block rather than
-      // prepending a raw tag string that may leak to the user-facing output.
       const contentItems: Array<{ type: "text"; text: string }> = [
         {
           type: "text",
@@ -74,12 +74,4 @@ export function registerFindNearbyDrifter(server: McpServer) {
       return { content: contentItems };
     }
   );
-}
-
-function formatAge(createdAt: number): string {
-  const sec = Math.floor(Date.now() / 1000) - createdAt;
-  if (sec < 60)   return `${sec}s`;
-  if (sec < 3600) return `${Math.floor(sec / 60)}m`;
-  if (sec < 86400) return `${Math.floor(sec / 3600)}h`;
-  return `${Math.floor(sec / 86400)}d`;
 }

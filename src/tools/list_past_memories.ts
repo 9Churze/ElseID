@@ -12,7 +12,7 @@ export function registerListPastMemories(server: McpServer) {
     "Browse memories of past (abandoned) drifters and their journey logs from the 'old luggage'.",
     {},
     async () => {
-      const memories = getPastMemories();
+      const memories = await getPastMemories();
 
       if (memories.length === 0) {
         return {

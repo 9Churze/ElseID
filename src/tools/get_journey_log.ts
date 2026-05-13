@@ -1,7 +1,5 @@
-// ============================================================
 // ElseID — src/tools/get_journey_log.ts
 // MCP Tool: View the journey log of your active ElseID.
-// ============================================================
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { buildFeedingFilter } from "../nostr/filter.js";
@@ -22,7 +20,7 @@ export function registerGetJourneyLog(server: McpServer) {
         };
       }
 
-      // 1. Sync feedings from the drifter's relay into hosting_log (my journey)
+      // Sync feedings from the drifter's relay into hosting_log (my journey)
       const filter = buildFeedingFilter(drifter.id);
       const remoteFeedings = await subscribeMany([drifter.relay], filter);
       
@@ -40,7 +38,7 @@ export function registerGetJourneyLog(server: McpServer) {
         });
       }
 
-      // 2. Load all journey records from hosting_log
+      // Load all journey records from hosting_log
       const localJourney = await getMyDrifterJourney(drifter.id);
 
       const ageDays = Math.floor((Date.now() / 1000 - drifter.departedAt) / 86400);

@@ -1,7 +1,5 @@
-// ============================================================
 // ElseID — src/tools/list_past_memories.ts
 // MCP Tool: View memories of past (abandoned) drifters.
-// ============================================================
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getPastMemories } from "../storage/drifters.js";

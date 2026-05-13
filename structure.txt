@@ -4,48 +4,48 @@ bicean/
 ├── README.md
 │
 ├── config/
-│   └── relays.ts            # 默认 Relay 列表配置
+│   └── relays.ts            # Default Relay list configuration
 │
 ├── types/
-│   └── index.ts             # 全局类型定义（Event、Bottle、Filter 等）
+│   └── index.ts             # Global type definitions (Event, Bottle, Filter, etc.)
 │
 ├── src/
-│   ├── index.ts             # MCP Server 入口，注册所有 Tools
+│   ├── index.ts             # MCP Server entry point, registers all Tools
 │   │
-│   ├── tools/               # MCP Tool 定义层
+│   ├── tools/               # MCP Tool definition layer
 │   │   ├── send_bottle.ts
 │   │   ├── fetch_bottle.ts
 │   │   ├── reply_bottle.ts
 │   │   └── relay_tools.ts
 │   │
-│   ├── nostr/               # Nostr 协议层
-│   │   ├── event_builder.ts # 构建 kind:7777 Event
-│   │   ├── event_signer.ts  # secp256k1 本地签名
-│   │   ├── ws_pool.ts       # WebSocket 连接池
-│   │   └── filter.ts        # REQ 订阅过滤器
+│   ├── nostr/               # Nostr protocol layer
+│   │   ├── event_builder.ts # Build kind:7777 Event
+│   │   ├── event_signer.ts  # secp256k1 local signing
+│   │   ├── ws_pool.ts       # WebSocket connection pool
+│   │   └── filter.ts        # REQ subscription filter
 │   │
-│   ├── ai/                  # AI 引擎层
-│   │   ├── moderator.ts     # 内容审核
-│   │   ├── emotion.ts       # 情绪识别 + 标签生成
-│   │   ├── matcher.ts       # 漂流匹配排序
-│   │   └── language.ts      # 语言识别
+│   ├── ai/                  # AI engine layer
+│   │   ├── moderator.ts     # Content moderation
+│   │   ├── emotion.ts       # Emotion recognition + tag generation
+│   │   ├── matcher.ts       # Drift matching and sorting
+│   │   └── language.ts      # Language detection
 │   │
-│   ├── crypto/              # 加密模块
-│   │   ├── keypair.ts       # 密钥生成 / 存储 / 备份
-│   │   └── encrypt.ts       # NIP 加密（阅后即焚）
+│   ├── crypto/              # Encryption module
+│   │   ├── keypair.ts       # Key generation / storage / backup
+│   │   └── encrypt.ts       # NIP encryption (Burn-after-reading)
 │   │
-│   ├── storage/             # 本地存储
-│   │   ├── db.ts            # SQLite 初始化
-│   │   ├── bottles.ts       # 漂流瓶 CRUD + TTL 清理
-│   │   └── identity.ts      # 匿名身份管理
+│   ├── storage/             # Local storage
+│   │   ├── db.ts            # SQLite initialization
+│   │   ├── bottles.ts       # Drift bottle CRUD + TTL cleanup
+│   │   └── identity.ts      # Anonymous identity management
 │   │
-│   ├── relay/               # Relay 管理
-│   │   ├── health.ts        # 在线状态 / 延迟检测
-│   │   ├── selector.ts      # 单播 Relay 选择策略
-│   │   └── broadcaster.ts   # 广播 + 错误重试
+│   ├── relay/               # Relay management
+│   │   ├── health.ts        # Online status / latency detection
+│   │   ├── selector.ts      # Unicast Relay selection strategy
+│   │   └── broadcaster.ts   # Broadcast + error retry
 │   │
-│   └── location/            # 位置模糊化
-│       └── geo.ts           # IP → 城市级坐标（截断精度）
+│   └── location/            # Location fuzzing
+│       └── geo.ts           # IP → City-level coordinates (truncated precision)
 │
 ├── tests/
 │   ├── nostr.test.ts

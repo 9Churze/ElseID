@@ -1,7 +1,5 @@
-// ============================================================
 // ElseID — src/tools/recover_drifter.ts
 // MCP Tool: Recover an orphaned drifter from the network.
-// ============================================================
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -24,7 +22,7 @@ export function registerRecoverDrifter(server: McpServer) {
     async (input) => {
       const identity = await getPrimaryIdentity();
       
-      // 1. Scan relays for drifter events by this pubkey
+      // Scan relays for drifter events by this pubkey
       const relayUrls = DEFAULT_RELAYS.map(r => r.url);
       const filter = {
         kinds: [DRIFTER_KIND],

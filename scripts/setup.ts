@@ -1,7 +1,5 @@
-// ============================================================
 // ElseID — scripts/setup.ts
-// 自动化安装与 MCP 配置文件注入脚本 (Zero-Config 版)
-// ============================================================
+// Automated installation and MCP configuration injection script (Zero-Config version)
 
 import fs from "fs";
 import path from "path";
@@ -14,24 +12,24 @@ const CONFIG_PATH = path.join(
 );
 
 async function setup() {
-  console.log("🌊 正在准备 ElseID 信号连接器 (Zero-Config)...");
+  console.log("🌊 Preparing ElseID signal connector (Zero-Config)...");
 
   const projectDir = process.cwd();
 
-  // 1. 安装依赖
-  console.log("> 正在同步依赖零件 (npm install)...");
+  // Install dependencies
+  console.log("> Synchronizing dependencies (npm install)...");
   try {
     execSync("npm install", { stdio: "inherit" });
   } catch (e) {
-    console.error("❌ 依赖安装失败，请确保已安装 Node.js 和 npm。");
+    console.error("❌ Dependency installation failed. Please ensure Node.js and npm are installed.");
     return;
   }
 
-  // 2. 修改 Claude Desktop 配置
-  console.log(`> 正在注入 MCP 配置到: ${CONFIG_PATH}`);
+  // Modify Claude Desktop configuration
+  console.log(`> Injecting MCP configuration into: ${CONFIG_PATH}`);
   
   if (!fs.existsSync(CONFIG_PATH)) {
-    console.log("ℹ️  未发现 Claude Desktop 配置文件，跳过自动注入。");
+    console.log("ℹ️  Claude Desktop configuration file not found. Skipping auto-injection.");
   } else {
     try {
       const config = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf-8"));
@@ -48,17 +46,17 @@ async function setup() {
       };
 
       fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
-      console.log("✅ MCP 配置注入成功！");
+      console.log("✅ MCP configuration injected successfully!");
     } catch (e: any) {
-      console.error(`❌ 配置文件修改失败: ${e.message}`);
+      console.error(`❌ Configuration file update failed: ${e.message}`);
     }
   }
 
-  console.log("\n🎉 ElseID 环境准备就绪！不需要任何 API Key 即可运行。");
-  console.log("请完全退出并重启 Claude Desktop，然后对 AI 说：");
+  console.log("\n🎉 ElseID environment is ready! No API Key required.");
+  console.log("Please fully quit and restart Claude Desktop, then say to the AI:");
   console.log(
     "\x1b[36m%s\x1b[0m",
-    "“你好管家，我想创建一个 ElseID 分身。”"
+    "\"Hello Butler, I want to create an ElseID drifter.\""
   );
 }
 

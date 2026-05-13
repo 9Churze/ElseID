@@ -1,7 +1,5 @@
-// ============================================================
 // ElseID — src/nostr/filter.ts
 // Builds Nostr REQ subscription filters for drifters and feedings.
-// ============================================================
 
 import { DRIFTER_KIND } from "../../types/index.js";
 
@@ -14,9 +12,6 @@ export interface NostrFilter {
   [key: `#${string}`]: string[] | undefined;
 }
 
-/**
- * Build a filter to find drifters.
- */
 export function buildDrifterFilter(limit = 20): NostrFilter {
   return {
     kinds: [DRIFTER_KIND],
@@ -25,9 +20,6 @@ export function buildDrifterFilter(limit = 20): NostrFilter {
   };
 }
 
-/**
- * Build a filter to fetch feedings for a specific drifter.
- */
 export function buildFeedingFilter(drifterId: string, limit = 50): NostrFilter {
   return {
     kinds:  [DRIFTER_KIND],
@@ -37,9 +29,6 @@ export function buildFeedingFilter(drifterId: string, limit = 50): NostrFilter {
   };
 }
 
-/**
- * Generate a random subscription ID for REQ messages.
- */
 export function newSubId(): string {
   return Math.random().toString(36).slice(2, 10);
 }

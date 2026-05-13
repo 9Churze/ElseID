@@ -1,29 +1,21 @@
-// ============================================================
 // ElseID — src/relay/selector.ts
 // Geographic-prioritized relay selection strategy.
-// ============================================================
 
 import { getHealthyRelays } from "./health.js";
 import { DEFAULT_RELAYS }   from "../../config/relays.js";
 import type { FuzzyLocation } from "../../types/index.js";
 
-/**
- * Pick the best relay for a drifter based on geographic proximity.
- */
 export async function pickRelayByGeo(location: FuzzyLocation): Promise<string> {
   const healthy = await getHealthyRelays();
   
-  // 1. Try to find a relay in the same country/region
+  // Try to find a relay in the same country/region
   const regionMatch = healthy.find(r => r.region === location.country);
   if (regionMatch) return regionMatch.url;
 
-  // 2. Fall back to weighted random pick (latency-based)
+  // Fall back to weighted random pick (latency-based)
   return await pickRelay();
 }
 
-/**
- * Pick the single best relay for sending a new drifter (fallback strategy).
- */
 export async function pickRelay(preferredUrl?: string): Promise<string> {
   const healthy = await getHealthyRelays();
 
@@ -49,9 +41,6 @@ export async function pickRelay(preferredUrl?: string): Promise<string> {
   return weighted[0].url;
 }
 
-/**
- * For find_nearby_drifter: prioritize relays in the same country/region.
- */
 export async function pickRelaysForFetch(location: FuzzyLocation, count = 3): Promise<string[]> {
   const healthy = await getHealthyRelays();
 

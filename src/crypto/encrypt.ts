@@ -1,21 +1,14 @@
-// ============================================================
 // ElseID — src/crypto/encrypt.ts
 // NIP-04 compatible encryption for burn-after-read bottles.
 // Uses AES-256-CBC with ECDH shared secret (secp256k1).
-// ============================================================
 
 import { getSharedSecret, getPublicKey } from "@noble/secp256k1";
 import { bytesToHex, hexToBytes, randomBytes } from "@noble/hashes/utils";
 import { sha256 }     from "@noble/hashes/sha256";
 import { createCipheriv, createDecipheriv } from "crypto";
 
-// ── Shared secret derivation ─────────────────────────────────
+// Shared secret derivation
 
-/**
- * Derive a 32-byte shared secret using ECDH (NIP-04 style).
- * privkeyHex: sender's private key
- * pubkeyHex:  recipient's compressed public key (33 bytes, or 32-byte x-only)
- */
 function deriveSharedSecret(privkeyHex: string, pubkeyHex: string): Buffer {
   // Ensure the pubkey is the full 33-byte compressed form
   const pubkeyBytes =
@@ -28,7 +21,7 @@ function deriveSharedSecret(privkeyHex: string, pubkeyHex: string): Buffer {
   return Buffer.from(sha256(shared.slice(1, 33)));
 }
 
-// ── Encrypt ──────────────────────────────────────────────────
+// Encrypt
 
 export interface EncryptedPayload {
   /** base64-encoded ciphertext */
@@ -37,9 +30,6 @@ export interface EncryptedPayload {
   iv: string;
 }
 
-/**
- * Encrypt plaintext with the sender's privkey and recipient's pubkey.
- */
 export function encryptContent(
   plaintext:    string,
   senderPrivHex: string,
@@ -60,9 +50,6 @@ export function encryptContent(
   return `${ct}?iv=${ivB64}`;
 }
 
-/**
- * Decrypt a NIP-04 ciphertext string.
- */
 export function decryptContent(
   ciphertextWithIv: string,
   recipientPrivHex: string,
@@ -86,11 +73,8 @@ export function decryptContent(
   return decrypted.toString("utf8");
 }
 
-// ── Ephemeral key for burn-after-read ────────────────────────
+// Ephemeral key for burn-after-read
 
-/**
- * Generate a one-time recipient keypair for a burn-after-read bottle.
- */
 export function generateEphemeralRecipient(): { pubkey: string; privkey: string } {
   const privBytes = randomBytes(32);
   const privkey   = bytesToHex(privBytes);

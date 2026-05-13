@@ -1,15 +1,13 @@
-// ============================================================
 // ElseID — src/crypto/keypair.ts
 // secp256k1 keypair generation, local storage, identity mgmt.
 // Private keys are stored ONLY on the local device.
-// ============================================================
 
 import { generateSecretKey, getPublicKey } from "nostr-tools";
 import { bytesToHex, hexToBytes }           from "@noble/hashes/utils.js";
 import { getDb }                            from "../storage/db.js";
 import type { Identity }                    from "../../types/index.js";
 
-// ── Internal helpers ─────────────────────────────────────────
+// Internal helpers
 
 function nowSec(): number {
   return Math.floor(Date.now() / 1000);
@@ -22,11 +20,8 @@ function newKeypair(): { privkey: string; pubkey: string } {
   return { privkey, pubkey };
 }
 
-// ── Public API ───────────────────────────────────────────────
+// Public API
 
-/**
- * Get the current primary identity, or create one if none exists.
- */
 export async function getPrimaryIdentity(): Promise<Identity> {
   const db = getDb();
   const row = await db.get(`
@@ -56,9 +51,6 @@ export async function getPrimaryIdentity(): Promise<Identity> {
   return identity;
 }
 
-/**
- * Set the active drifter ID for the primary identity.
- */
 export async function setActiveDrifter(drifterId: string | null): Promise<void> {
   const db = getDb();
   const identity = await getPrimaryIdentity();
@@ -67,19 +59,16 @@ export async function setActiveDrifter(drifterId: string | null): Promise<void> 
   `, [drifterId, identity.pubkey]);
 }
 
-/**
- * Rotate the identity: create a brand-new primary keypair.
- */
 export async function rotateIdentity(): Promise<Identity> {
   const db = getDb();
-  // ── Step 1: Shred the old private key in-place ──────────────
+  // Shred the old private key in-place
   const scrub = bytesToHex(generateSecretKey()); 
   await db.run(`UPDATE identities SET privkey = ?`, [scrub]);
 
-  // ── Step 2: Delete the now-worthless row ─────────────────────
+  // Delete the now-worthless row
   await db.run(`DELETE FROM identities`);
 
-  // ── Step 3: Insert fresh identity ───────────────────────────
+  // Insert fresh identity
   const { privkey, pubkey } = newKeypair();
   const identity: Identity  = { pubkey, privkey, createdAt: nowSec(), activeDrifterId: null };
 
@@ -88,23 +77,17 @@ export async function rotateIdentity(): Promise<Identity> {
     VALUES (?, ?, ?, ?)
   `, [identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId]);
 
-  // ── Step 4: Checkpoint WAL
+  // Checkpoint WAL
   try { await db.exec("PRAGMA wal_checkpoint(TRUNCATE)"); } catch { }
 
   return identity;
 }
 
-/**
- * Export keypair for backup.
- */
 export async function exportKeypair(): Promise<{ pubkey: string; privkey: string } | null> {
   const identity = await getPrimaryIdentity();
   return { pubkey: identity.pubkey, privkey: identity.privkey };
 }
 
-/**
- * Import a keypair from backup.
- */
 export async function importKeypair(privkeyHex: string): Promise<Identity> {
   const db = getDb();
   if (!/^[0-9a-f]{64}$/i.test(privkeyHex)) {

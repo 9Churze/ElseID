@@ -1,12 +1,10 @@
-// ============================================================
 // ElseID — src/nostr/event_builder.ts
 // Constructs kind:7777 unsigned Nostr events for digital drifters.
-// ============================================================
 
 import { DRIFTER_KIND } from "../../types/index.js";
 import type { UnsignedEvent, Drifter, Feeding, FuzzyLocation, PersonalityAnalysis } from "../../types/index.js";
 
-// ── Drifter Builder ───────────────────────────────────────────
+// Drifter Builder
 
 export interface DrifterBuildOptions {
   pubkey:      string;
@@ -17,9 +15,6 @@ export interface DrifterBuildOptions {
   content:     string; // The departure sentence
 }
 
-/**
- * Build an unsigned kind:7777 Nostr event for a digital drifter.
- */
 export function buildDrifterEvent(opts: DrifterBuildOptions): UnsignedEvent {
   const { pubkey, name, personality, analysis, location, content } = opts;
 
@@ -50,7 +45,7 @@ export function buildDrifterEvent(opts: DrifterBuildOptions): UnsignedEvent {
   };
 }
 
-// ── Feeding Builder ───────────────────────────────────────────
+// Feeding Builder
 
 export interface FeedingBuildOptions {
   pubkey:          string;
@@ -60,9 +55,6 @@ export interface FeedingBuildOptions {
   location:        FuzzyLocation;
 }
 
-/**
- * Build an unsigned kind:7777 reply event (feeding).
- */
 export function buildFeedingEvent(opts: FeedingBuildOptions): UnsignedEvent {
   const { pubkey, drifterEventId, feedType, content, location } = opts;
 
@@ -84,9 +76,6 @@ export function buildFeedingEvent(opts: FeedingBuildOptions): UnsignedEvent {
   };
 }
 
-/**
- * Build a NIP-09 deletion request (kind 5).
- */
 export function buildDeletionEvent(pubkey: string, eventIds: string[], reason = ""): any {
   return {
     pubkey,
@@ -97,7 +86,7 @@ export function buildDeletionEvent(pubkey: string, eventIds: string[], reason = 
   };
 }
 
-// ── Tag parsing helpers ───────────────────────────────────────
+// Tag parsing helpers
 
 export function getTag(tags: string[][], name: string): string | undefined {
   return tags.find(([k]) => k === name)?.[1];

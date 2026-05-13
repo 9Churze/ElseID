@@ -1,7 +1,5 @@
-// ============================================================
 // ElseID — src/tools/create_drifter.ts
 // MCP Tool: Create and launch an ElseID drifter.
-// ============================================================
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -29,7 +27,7 @@ export function registerCreateDrifter(server: McpServer) {
       const identity = await getPrimaryIdentity();
       const creating = await isCreating();
       
-      // 1. Check for existing drifter or active lock
+      // Check for existing drifter or active lock
       if (identity.activeDrifterId || creating) {
         return {
           content: [{ type: "text", text: "❌ You already have a drifter on a journey or in the process of launching. Please wait." }],
@@ -37,7 +35,7 @@ export function registerCreateDrifter(server: McpServer) {
         };
       }
 
-      // 2. Lock creation process
+      // Lock creation process
       await setCreationLock(true);
 
       try {
@@ -89,7 +87,7 @@ export function registerCreateDrifter(server: McpServer) {
           }],
         };
       } finally {
-        // 3. Unlock creation process
+        // Unlock creation process
         await setCreationLock(false);
       }
     }

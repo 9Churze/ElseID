@@ -1,6 +1,4 @@
-// ============================================================
 // ElseID — MCP Server Entry Point
-// ============================================================
 
 import { McpServer }           from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -18,10 +16,10 @@ import { closeAll }                  from "./nostr/ws_pool.js";
 import { checkAllRelays }            from "./relay/health.js";
 
 async function main() {
-  // 1. Initialize local SQLite database
+  // Initialize local SQLite database
   await initDb();
 
-  // 2. Immediate Relay Refresh (Auto-Activation Optimization)
+  // Immediate Relay Refresh (Auto-Activation Optimization)
   // We trigger this immediately and don't block the main server startup.
   // This ensures that by the time the user sends their first prompt, 
   // the relay stats are already fresh.
@@ -32,13 +30,13 @@ async function main() {
     console.error("[ElseID] Background relay check encountered an issue.");
   });
 
-  // 3. Create MCP server
+  // Create MCP server
   const server = new McpServer({
     name:    "elseid-mcp",
     version: "0.2.1", // Bumped version for the new architecture
   });
 
-  // 4. Register all tools
+  // Register all tools
   registerCreateDrifter(server);
   registerFindNearbyDrifter(server);
   registerFeedDrifter(server);
@@ -48,13 +46,13 @@ async function main() {
   registerRecoverDrifter(server);
   registerRelayTools(server);
 
-  // 5. Start stdio transport
+  // Start stdio transport
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
   console.error("[ElseID] Drifter MCP server activated and ready ✓");
 
-  // 6. Graceful shutdown
+  // Graceful shutdown
   const shutdown = () => {
     console.error("[ElseID] Shutting down…");
     closeAll();

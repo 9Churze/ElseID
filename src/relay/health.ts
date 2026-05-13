@@ -1,20 +1,14 @@
-// ============================================================
 // ElseID — src/relay/health.ts
 // Relay health checks: online status, latency, writability.
 // Persists results to relay_stats table for use by selector.
-// ============================================================
 
 import WebSocket from "ws";
 import { getDb }                from "../storage/db.js";
 import { DEFAULT_RELAYS, WS_TIMEOUT_MS, HEALTH_CHECK_INTERVAL_MS } from "../../config/relays.js";
 import type { RelayInfo }       from "../../types/index.js";
 
-// ── Single relay check ────────────────────────────────────────
+// Single relay check
 
-/**
- * Ping a single relay by opening a WebSocket and timing
- * how long it takes to receive the first message or confirm open.
- */
 export async function checkRelay(url: string): Promise<RelayInfo> {
   return new Promise((resolve) => {
     const start = Date.now();
@@ -59,7 +53,7 @@ export async function checkRelay(url: string): Promise<RelayInfo> {
   });
 }
 
-// ── Batch check ──────────────────────────────────────────────
+// Batch check
 
 export async function checkAllRelays(): Promise<RelayInfo[]> {
   const urls    = DEFAULT_RELAYS.map((r) => r.url);
@@ -73,9 +67,6 @@ export async function checkAllRelays(): Promise<RelayInfo[]> {
   });
 }
 
-/**
- * Return all relay info from the local cache (relay_stats table).
- */
 export async function getCachedRelayInfo(): Promise<RelayInfo[]> {
   const db = getDb();
   const rows = await db.all(`
@@ -95,9 +86,6 @@ export async function getCachedRelayInfo(): Promise<RelayInfo[]> {
   }));
 }
 
-/**
- * Return online, writable relays.
- */
 export async function getHealthyRelays(): Promise<RelayInfo[]> {
   const cached = await getCachedRelayInfo();
   const db = getDb();
@@ -120,7 +108,7 @@ export async function getHealthyRelays(): Promise<RelayInfo[]> {
   return healthy;
 }
 
-// ── Persistence ───────────────────────────────────────────────
+// Persistence
 
 async function persist(info: RelayInfo): Promise<void> {
   const db = getDb();

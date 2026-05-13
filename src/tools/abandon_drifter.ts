@@ -1,7 +1,5 @@
-// ============================================================
 // ElseID — src/tools/abandon_drifter.ts
 // MCP Tool: Abandon the current ElseID and start fresh.
-// ============================================================
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -37,18 +35,18 @@ export function registerAbandonDrifter(server: McpServer) {
 
       const identity = await getPrimaryIdentity();
       
-      // 1. Send NIP-09 deletion request
+      // Send NIP-09 deletion request
       const deletionEvent = buildDeletionEvent(identity.pubkey, [drifter.id], "User decided to start fresh.");
       const signedDeletion = signEvent(deletionEvent, identity.privkey);
       await broadcast(signedDeletion, drifter.relay);
 
-      // 2. Update local storage: mark drifter as abandoned
+      // Update local storage: mark drifter as abandoned
       await updateDrifterStatus(drifter.id, "abandoned", Math.floor(Date.now() / 1000));
 
-      // 3. Explicitly clear active_drifter_id before rotation
+      // Explicitly clear active_drifter_id before rotation
       await setActiveDrifter(null);
 
-      // 4. Rotate identity (fresh start + key shredding)
+      // Rotate identity (fresh start + key shredding)
       await rotateIdentity();
 
       return {

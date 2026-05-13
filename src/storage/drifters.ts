@@ -1,16 +1,11 @@
-// ============================================================
 // ElseID — src/storage/drifters.ts
 // Local SQLite CRUD for digital drifters and feedings.
-// ============================================================
 
 import { getDb } from "./db.js";
 import type { Drifter, Feeding, DrifterStatus, FeedType } from "../../types/index.js";
 
-// ── Drifter Persistence ────────────────────────────────────────
+// Drifter Persistence
 
-/**
- * Save our own created drifter.
- */
 export async function saveMyDrifter(drifter: Drifter): Promise<void> {
   const db = getDb();
   await db.run(`
@@ -31,9 +26,6 @@ export async function saveMyDrifter(drifter: Drifter): Promise<void> {
   ]);
 }
 
-/**
- * Update drifter status.
- */
 export async function updateDrifterStatus(id: string, status: DrifterStatus, abandonedAt?: number): Promise<void> {
   const db = getDb();
   if (abandonedAt) {
@@ -43,9 +35,6 @@ export async function updateDrifterStatus(id: string, status: DrifterStatus, aba
   }
 }
 
-/**
- * Update drifter last seen info.
- */
 export async function updateDrifterPresence(id: string, location: string, timestamp: number): Promise<void> {
   const db = getDb();
   await db.run(`
@@ -72,11 +61,8 @@ export async function getMyActiveDrifter(): Promise<Drifter | null> {
   return rowToDrifter(row);
 }
 
-// ── Feeding Persistence ────────────────────────────────────────
+// Feeding Persistence
 
-/**
- * Save an interaction where I hosted/fed someone else's drifter.
- */
 export async function saveOutgoingFeeding(feeding: Feeding): Promise<void> {
   const db = getDb();
   await db.run(`
@@ -97,20 +83,14 @@ export async function saveOutgoingFeeding(feeding: Feeding): Promise<void> {
   ]);
 }
 
-/**
- * Check if I have already hosted/fed a specific drifter.
- */
 export async function hasHostedBefore(drifterId: string): Promise<boolean> {
   const db = getDb();
   const row = await db.get(`SELECT 1 FROM feedings WHERE drifter_id = ?`, [drifterId]);
   return !!row;
 }
 
-// ── Journey Log Persistence ────────────────────────────────────
+// Journey Log Persistence
 
-/**
- * Save a record of my own drifter being hosted/fed.
- */
 export async function saveIncomingFeeding(feeding: Feeding): Promise<void> {
   const db = getDb();
   await db.run(`
@@ -154,7 +134,7 @@ export async function getPastMemories(): Promise<{ drifter: Drifter, journey: Fe
   return result;
 }
 
-// ── Row mapping ───────────────────────────────────────────────
+// Row mapping
 
 function rowToDrifter(row: any): Drifter {
   return {

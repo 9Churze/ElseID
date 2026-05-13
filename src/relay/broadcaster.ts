@@ -1,8 +1,6 @@
-// ============================================================
 // ElseID — src/relay/broadcaster.ts
 // Broadcasts a signed Nostr event to a single relay via
 // WebSocket. Retries on transient failures with backoff.
-// ============================================================
 
 import WebSocket from "ws";
 import { WS_TIMEOUT_MS } from "../../config/relays.js";
@@ -18,10 +16,6 @@ export interface BroadcastResult {
   message?: string;
 }
 
-/**
- * Send a signed Nostr event to a relay and wait for the OK/NOTICE reply.
- * Retries up to MAX_RETRIES times on connection or timeout errors.
- */
 export async function broadcast(
   event: NostrEvent,
   relayUrl: string
@@ -46,7 +40,7 @@ export async function broadcast(
   return { success: false, relay: relayUrl, eventId: event.id, message: lastError };
 }
 
-// ── Internal ──────────────────────────────────────────────────
+// Internal
 
 function sendOnce(event: NostrEvent, relayUrl: string): Promise<BroadcastResult> {
   return new Promise((resolve, reject) => {

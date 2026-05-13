@@ -1,7 +1,5 @@
-// ============================================================
 // ElseID — src/tools/feed_drifter.ts
 // MCP Tool: Feed an ElseID drifter with stories/food/places.
-// ============================================================
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";

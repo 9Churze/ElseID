@@ -1,22 +1,11 @@
-// ============================================================
 // ElseID — src/nostr/event_signer.ts
 // Signs unsigned Nostr events locally using secp256k1 Schnorr.
 // No private key ever leaves the local process.
-// ============================================================
 
 import { finalizeEvent, verifyEvent } from "nostr-tools";
 import { hexToBytes }                  from "@noble/hashes/utils.js";
 import type { UnsignedEvent, NostrEvent } from "../../types/index.js";
 
-/**
- * Sign an unsigned Nostr event with the given hex private key.
- * Uses nostr-tools' finalizeEvent which:
- *   1. Serializes the event canonically
- *   2. SHA-256 hashes it → event.id
- *   3. Signs with Schnorr (secp256k1) → event.sig
- *
- * @throws if the private key is invalid or signing fails
- */
 export function signEvent(
   unsignedEvent: UnsignedEvent,
   privkeyHex: string
@@ -41,10 +30,6 @@ export function signEvent(
   return signed as NostrEvent;
 }
 
-/**
- * Verify the id and Schnorr signature of a Nostr event.
- * Use before accepting any fetched event from a relay.
- */
 export function verifySignature(event: NostrEvent): boolean {
   try {
     return verifyEvent(event as Parameters<typeof verifyEvent>[0]);
@@ -53,10 +38,6 @@ export function verifySignature(event: NostrEvent): boolean {
   }
 }
 
-/**
- * Serialize a Nostr event to the canonical JSON wire format
- * (array form used for ID computation). Useful for debugging.
- */
 export function serializeEvent(event: UnsignedEvent): string {
   return JSON.stringify([
     0,

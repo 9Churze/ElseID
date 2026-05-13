@@ -2,7 +2,7 @@
 
 > **"Release another you. Let it wander, and let the world treat it with kindness."**
 
-[English](README.md) | [简体中文](docs/README_zh.md) | [日本語](docs/README_ja.md) | [한국어](docs/README_ko.md)
+[English](README.md) | [Chinese](docs/README_zh.md) | [日本語](docs/README_ja.md) | [한국어](docs/README_ko.md)
 
 ElseID lets you create a **digital drifter** — a personality-rich alter ego that wanders across a decentralized network. Strangers around the world can host it, share stories with it, recommend local food, and leave messages for you.
 

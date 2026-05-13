@@ -1,7 +1,5 @@
-// ============================================================
 // ElseID — src/tools/relay_tools.ts
 // MCP Tools: list_relays, check_relay_status, pick_relay
-// ============================================================
 
 import { McpServer }            from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z }                    from "zod";
@@ -11,7 +9,7 @@ import type { RelayInfo }       from "../../types/index.js";
 
 export function registerRelayTools(server: McpServer) {
 
-  // ── list_relays ─────────────────────────────────────────────
+  // list_relays
   server.tool(
     "list_relays",
     "List all known relays with their cached online status and latency. Triggers a background refresh if data is stale.",
@@ -29,7 +27,7 @@ export function registerRelayTools(server: McpServer) {
     }
   );
 
-  // ── check_relay_status ──────────────────────────────────────
+  // check_relay_status
   server.tool(
     "check_relay_status",
     "Perform a live health check on a specific Nostr relay and return its status.",
@@ -50,7 +48,7 @@ export function registerRelayTools(server: McpServer) {
     }
   );
 
-  // ── pick_relay ──────────────────────────────────────────────
+  // pick_relay
   server.tool(
     "pick_relay",
     "Let the system pick the best available relay for your next create_drifter call.",
@@ -66,7 +64,7 @@ export function registerRelayTools(server: McpServer) {
     }
   );
 
-  // ── refresh_relays ──────────────────────────────────────────
+  // refresh_relays
   server.tool(
     "refresh_relays",
     "Run a fresh health check on ALL known relays and update the local cache.",
@@ -88,7 +86,7 @@ export function registerRelayTools(server: McpServer) {
   );
 }
 
-// ── Formatting ────────────────────────────────────────────────
+// Formatting
 
 function formatRelayList(relays: RelayInfo[]): string {
   if (relays.length === 0) return "No relay data available.";

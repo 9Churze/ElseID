@@ -1,7 +1,5 @@
-// ============================================================
 // ElseID — src/storage/identity.ts
 // Identity management layer for Digital Drifters.
-// ============================================================
 
 import {
   getPrimaryIdentity,
@@ -12,17 +10,11 @@ import {
 } from "../crypto/keypair.js";
 import { getDb } from "./db.js";
 
-/**
- * Get the current active drifter ID for the primary identity.
- */
 export async function getActiveDrifterId(): Promise<string | null> {
   const identity = await getPrimaryIdentity();
   return identity.activeDrifterId;
 }
 
-/**
- * Set the creation lock to prevent concurrent creation.
- */
 export async function setCreationLock(locked: boolean): Promise<void> {
   const identity = await getPrimaryIdentity();
   const db = getDb();
@@ -31,16 +23,13 @@ export async function setCreationLock(locked: boolean): Promise<void> {
   `, [locked ? 1 : 0, identity.pubkey]);
 }
 
-/**
- * Check if the creation lock is active.
- */
 export async function isCreating(): Promise<boolean> {
   const db = getDb();
   const row = await db.get(`SELECT is_creating FROM identities LIMIT 1`) as { is_creating: number } | undefined;
   return !!row?.is_creating;
 }
 
-// ── Re-exports for tool layer ─────────────────────────────────
+// Re-exports for tool layer
 
 export {
   getPrimaryIdentity,

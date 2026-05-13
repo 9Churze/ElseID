@@ -1,8 +1,6 @@
-// ============================================================
 // ElseID — src/nostr/ws_pool.ts
 // WebSocket connection pool. Manages relay connections and
 // handles REQ/EOSE/EVENT/CLOSE Nostr protocol messages.
-// ============================================================
 
 import WebSocket from "ws";
 import { WS_TIMEOUT_MS, FETCH_LIMIT } from "../../config/relays.js";
@@ -11,7 +9,7 @@ import { verifySignature }             from "./event_signer.js";
 import type { NostrEvent }             from "../../types/index.js";
 import type { NostrFilter }            from "./filter.js";
 
-// ── Pool state ────────────────────────────────────────────────
+// Pool state
 
 const _connections = new Map<string, WebSocket>();
 const _connecting  = new Map<string, Promise<WebSocket>>();
@@ -64,7 +62,7 @@ export function closeAll(): void {
   }
 }
 
-// ── Subscribe ─────────────────────────────────────────────────
+// Subscribe
 
 export async function subscribe(
   relayUrl: string,
@@ -164,7 +162,7 @@ export async function subscribeMany(
   return merged.sort((a, b) => b.event.created_at - a.event.created_at);
 }
 
-// ── Type guard ────────────────────────────────────────────────
+// Type guard
 
 function isNostrEvent(v: unknown): v is NostrEvent {
   if (typeof v !== "object" || v === null) return false;

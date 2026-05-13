@@ -1,7 +1,5 @@
-// ============================================================
 // ElseID — src/tools/find_nearby_drifter.ts
 // MCP Tool: Find digital drifters nearby.
-// ============================================================
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getFuzzyLocation } from "../location/geo.js";

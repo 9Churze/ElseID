@@ -5,6 +5,7 @@
 import { generateSecretKey, getPublicKey } from "nostr-tools";
 import { bytesToHex } from "@noble/hashes/utils.js";
 import { getDb } from "../storage/db.js";
+import { encrypt, decrypt } from "./encryption.js";
 import type { Identity } from "../../types/index.js";
 
 // Internal helpers
@@ -33,7 +34,7 @@ export async function getPrimaryIdentity(): Promise<Identity> {
   if (row) {
     return {
       pubkey: row.pubkey,
-      privkey: row.privkey,
+      privkey: decrypt(row.privkey),
       createdAt: row.created_at,
       activeDrifterId: row.active_drifter_id,
       hostName: row.host_name,
@@ -47,7 +48,7 @@ export async function getPrimaryIdentity(): Promise<Identity> {
   await db.run(`
     INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id, host_name)
     VALUES (?, ?, ?, ?, ?)
-  `, [identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId, identity.hostName]);
+  `, [identity.pubkey, encrypt(identity.privkey), identity.createdAt, identity.activeDrifterId, identity.hostName]);
 
   return identity;
 }
@@ -68,8 +69,8 @@ export async function setActiveDrifter(drifterId: string | null): Promise<void> 
 
 export async function rotateIdentity(): Promise<Identity> {
   const db = getDb();
-  // Shred the old private key in-place
-  const scrub = bytesToHex(generateSecretKey());
+  // Shred the old private key in-place with random data (encrypted)
+  const scrub = encrypt(bytesToHex(generateSecretKey()));
   await db.run(`UPDATE identities SET privkey = ?`, [scrub]);
 
   // Delete the now-worthless row
@@ -82,7 +83,7 @@ export async function rotateIdentity(): Promise<Identity> {
   await db.run(`
     INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id, host_name)
     VALUES (?, ?, ?, ?, ?)
-  `, [identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId, identity.hostName]);
+  `, [identity.pubkey, encrypt(identity.privkey), identity.createdAt, identity.activeDrifterId, identity.hostName]);
 
   // Checkpoint WAL
   try { await db.exec("PRAGMA wal_checkpoint(TRUNCATE)"); } catch { }

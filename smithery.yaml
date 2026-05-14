@@ -1,0 +1,19 @@
+# Smithery configuration for ElseID MCP
+name: elseid-mcp
+description: Zero-config decentralized AI drifter system over Nostr. A privacy-first, local-first protocol for digital wanderers.
+startCommand: stdio
+configSchema:
+  type: object
+  properties:
+    ELSEID_DATA_DIR:
+      type: string
+      description: Custom directory path for SQLite database and local identity storage. Defaults to ~/.elseid
+  required: []
+commandFunction: |
+  (config) => ({
+    command: "npx",
+    args: ["-y", "elseid-mcp"],
+    env: {
+      ELSEID_DATA_DIR: config.ELSEID_DATA_DIR
+    }
+  })

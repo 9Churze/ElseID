@@ -11,10 +11,12 @@ const DB_PATH = path.join(DATA_DIR, "elseid.db");
 
 try {
   if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+    fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });
+  } else {
+    fs.chmodSync(DATA_DIR, 0o700);
   }
 } catch (err) {
-  console.warn(`⚠️ Failed to create data directory ${DATA_DIR}, using fallback.`);
+  console.warn(`⚠️ Failed to set permissions on data directory ${DATA_DIR}:`, err);
 }
 
 let _db: Database | null = null;
@@ -31,8 +33,18 @@ export async function initDb(): Promise<void> {
     driver: sqlite3.Database
   });
 
+  // Ensure DB file has restricted permissions
+  try {
+    if (fs.existsSync(DB_PATH)) {
+      fs.chmodSync(DB_PATH, 0o600);
+    }
+  } catch (err) {
+    console.warn(`⚠️ Failed to set permissions on database file ${DB_PATH}:`, err);
+  }
+
   await _db.exec("PRAGMA journal_mode = WAL");
   await _db.exec("PRAGMA foreign_keys = ON");
+  await _db.exec("PRAGMA secure_delete = ON");
 
   await _db.exec(`
     CREATE TABLE IF NOT EXISTS drifters (

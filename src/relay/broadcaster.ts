@@ -85,8 +85,8 @@ function sendOnce(event: NostrEvent, relayUrl: string): Promise<BroadcastResult>
         if (type === "NOTICE") {
           console.warn(`[broadcaster] NOTICE from ${relayUrl}:`, rest[0]);
         }
-      } catch {
-        // ignore parse errors
+      } catch (err) {
+        console.warn(`[broadcaster] Failed to parse message from ${relayUrl}:`, err);
       }
     });
 

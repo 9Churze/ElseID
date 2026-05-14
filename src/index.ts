@@ -14,7 +14,7 @@ import { registerRecoverDrifter } from "./tools/recover_drifter.js";
 import { registerRelayTools } from "./tools/relay_tools.js";
 import { registerSetHostName } from "./tools/set_host_name.js";
 import { registerEvolveDrifter } from "./tools/evolve_drifter.js";
-import { initDb } from "./storage/db.js";
+import { initDb, closeDb } from "./storage/db.js";
 import { closeAll } from "./nostr/ws_pool.js";
 import { checkAllRelays } from "./relay/health.js";
 import { redactSecrets } from "./utils/redact.js";
@@ -55,9 +55,10 @@ async function main() {
 
   console.error("[ElseID] Drifter MCP server activated and ready ✓");
 
-  const shutdown = () => {
+  const shutdown = async () => {
     console.error("[ElseID] Shutting down…");
     closeAll();
+    await closeDb();
     process.exit(0);
   };
   process.on("SIGINT", shutdown);

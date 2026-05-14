@@ -2,6 +2,7 @@
 // Builds Nostr REQ subscription filters for drifters and feedings.
 
 import { DRIFTER_KIND } from "../../types/index.js";
+import crypto from "node:crypto";
 
 export interface NostrFilter {
   kinds:  number[];
@@ -30,5 +31,5 @@ export function buildFeedingFilter(drifterId: string, limit = 50): NostrFilter {
 }
 
 export function newSubId(): string {
-  return Math.random().toString(36).slice(2, 10);
+  return crypto.randomBytes(8).toString("hex");
 }

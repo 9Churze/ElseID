@@ -146,6 +146,18 @@ export async function initDb(): Promise<void> {
       await _db.exec(`ALTER TABLE hosting_log ADD COLUMN feeder_name TEXT`);
     }
   } catch (err) {
-    // Column might already exist or PRAGMA failed
+    console.warn("⚠️ Database initialization/migration notice:", err);
+  }
+}
+
+export async function closeDb(): Promise<void> {
+  if (_db) {
+    try {
+      await _db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+      await _db.close();
+      _db = null;
+    } catch (err) {
+      console.error("❌ Error closing database:", err);
+    }
   }
 }

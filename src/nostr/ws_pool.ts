@@ -98,7 +98,9 @@ export async function subscribe(
       ws.removeListener("message", onMessage);
       ws.removeListener("close", onAbort);
       ws.removeListener("error", onAbort);
-      try { ws.send(JSON.stringify(["CLOSE", subId])); } catch { /**/ }
+      try { ws.send(JSON.stringify(["CLOSE", subId])); } catch (err) {
+        console.warn(`[ws_pool] Failed to send CLOSE for ${subId}:`, err);
+      }
     }
 
     function onAbort() {
@@ -110,7 +112,10 @@ export async function subscribe(
       let msg: unknown[];
       try {
         msg = JSON.parse(raw.toString()) as unknown[];
-      } catch { return; }
+      } catch (err) { 
+        console.warn("[ws_pool] Failed to parse message:", err);
+        return; 
+      }
 
       const [type, id, payload] = msg;
 
@@ -244,7 +249,9 @@ export async function subscribeRaceFirst(
             ws.removeListener("close", onAbort);
             ws.removeListener("error", onAbort);
             abortController.signal.removeEventListener("abort", onAbort);
-            try { ws.send(JSON.stringify(["CLOSE", subId])); } catch { /**/ }
+            try { ws.send(JSON.stringify(["CLOSE", subId])); } catch (err) {
+              console.warn(`[ws_pool] Failed to send CLOSE (race) for ${subId}:`, err);
+            }
           };
 
           const closeRelay = () => {
@@ -265,7 +272,10 @@ export async function subscribeRaceFirst(
             let msg: unknown[];
             try {
               msg = JSON.parse(raw.toString()) as unknown[];
-            } catch { return; }
+            } catch (err) {
+              console.warn("[ws_pool] Failed to parse message (race):", err);
+              return;
+            }
 
             const [type, id, payload] = msg;
 

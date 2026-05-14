@@ -33,6 +33,9 @@ export async function checkRelay(url: string): Promise<RelayInfo> {
         if (!settled) {
           settled = true;
           clearTimeout(timeout);
+          try { ws.send(JSON.stringify(["CLOSE", "health-probe"])); } catch (err) {
+            console.warn(`[health] Failed to close health-probe for ${url}:`, err);
+          }
           ws.close();
           const info: RelayInfo = { url, online: true, latencyMs, writable: true };
           await persist(info);
@@ -93,7 +96,9 @@ export async function getHealthyRelays(): Promise<RelayInfo[]> {
   const row = await db.get(`SELECT MAX(last_check) AS lc FROM relay_stats`) as { lc: number | null };
 
   if (!row?.lc || row.lc < staleThreshold) {
-    checkAllRelays().catch(() => { });
+    checkAllRelays().catch((err) => {
+      console.warn("⚠️ Background relay health check failed:", err);
+    });
   }
 
   const healthy = cached.filter((r) => r.online && r.writable);

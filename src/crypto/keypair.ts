@@ -88,7 +88,9 @@ export async function rotateIdentity(): Promise<Identity> {
   `, [identity.pubkey, encrypt(identity.privkey), identity.createdAt, identity.activeDrifterId, identity.hostName]);
 
     // Checkpoint WAL
-    try { await db.exec("PRAGMA wal_checkpoint(TRUNCATE)"); } catch { }
+    try { await db.exec("PRAGMA wal_checkpoint(TRUNCATE)"); } catch (err) {
+      console.warn("⚠️ WAL checkpoint failed during rotation:", err);
+    }
 
     await db.exec("COMMIT");
     return identity;

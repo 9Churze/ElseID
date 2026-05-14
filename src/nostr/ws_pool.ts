@@ -16,8 +16,14 @@ const _connecting = new Map<string, Promise<WebSocket>>();
 
 function getOrOpen(relayUrl: string): Promise<WebSocket> {
   const existing = _connections.get(relayUrl);
-  if (existing && existing.readyState === WebSocket.OPEN) {
-    return Promise.resolve(existing);
+  if (existing) {
+    if (existing.readyState === WebSocket.OPEN) {
+      return Promise.resolve(existing);
+    }
+    // If it's closing or already closed, remove it and re-open
+    if (existing.readyState === WebSocket.CLOSING || existing.readyState === WebSocket.CLOSED) {
+      _connections.delete(relayUrl);
+    }
   }
 
   const inProgress = _connecting.get(relayUrl);

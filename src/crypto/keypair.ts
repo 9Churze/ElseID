@@ -55,6 +55,12 @@ export async function getPrimaryIdentity(): Promise<Identity> {
 export async function setActiveDrifter(drifterId: string | null): Promise<void> {
   const db = getDb();
   const identity = await getPrimaryIdentity();
+  
+  // Prevent race conditions where two drifters are set as active simultaneously
+  if (drifterId && identity.activeDrifterId && identity.activeDrifterId !== drifterId) {
+    throw new Error("Active identity collision: Another drifter is already under guidance.");
+  }
+
   await db.run(`
     UPDATE identities SET active_drifter_id = ? WHERE pubkey = ?
   `, [drifterId, identity.pubkey]);

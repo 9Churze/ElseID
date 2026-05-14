@@ -37,5 +37,6 @@ coverage/
 .elseid_data/
 .bicean_data/
 
-# Tests (local test artifacts, not committed)
-tests/
+# Tests (local test artifacts)
+# .elseid_test/
+# .bicean_test/

@@ -93,6 +93,21 @@ export async function initDb(): Promise<void> {
       writable    INTEGER DEFAULT 1,
       last_check  INTEGER
     );
+
+    CREATE TABLE IF NOT EXISTS encounters (
+      token         TEXT PRIMARY KEY,
+      drifter_id    TEXT NOT NULL,
+      relay         TEXT NOT NULL,
+      discovered_at INTEGER NOT NULL,
+      expires_at    INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS drifter_lineage (
+      child_id   TEXT PRIMARY KEY,
+      parent_id  TEXT NOT NULL,
+      reason     TEXT,
+      evolved_at INTEGER NOT NULL
+    );
   `);
 
   await _db.run(`UPDATE identities SET is_creating = 0`);

@@ -5,10 +5,9 @@ import {
   getPrimaryIdentity,
   setActiveDrifter,
   rotateIdentity,
-  exportKeypair,
-  importKeypair,
 } from "../crypto/keypair.js";
 import { getDb } from "./db.js";
+import { sanitizeName } from "../utils/text.js";
 
 export async function getActiveDrifterId(): Promise<string | null> {
   const identity = await getPrimaryIdentity();
@@ -26,9 +25,10 @@ export async function setCreationLock(locked: boolean): Promise<void> {
 export async function setHostName(name: string): Promise<void> {
   const identity = await getPrimaryIdentity();
   const db = getDb();
+  const safeName = sanitizeName(name, "Host");
   await db.run(`
     UPDATE identities SET host_name = ? WHERE pubkey = ?
-  `, [name, identity.pubkey]);
+  `, [safeName, identity.pubkey]);
 }
 
 export async function isCreating(): Promise<boolean> {
@@ -43,6 +43,4 @@ export {
   getPrimaryIdentity,
   setActiveDrifter,
   rotateIdentity,
-  exportKeypair,
-  importKeypair,
 };

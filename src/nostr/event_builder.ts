@@ -33,8 +33,6 @@ export function buildDrifterEvent(opts: DrifterBuildOptions): UnsignedEvent {
 
   if (location.country) tags.push(["country", location.country]);
   if (location.city)    tags.push(["city",    location.city]);
-  if (location.lat)     tags.push(["lat",     location.lat]);
-  if (location.lon)     tags.push(["lon",     location.lon]);
 
   return {
     pubkey,

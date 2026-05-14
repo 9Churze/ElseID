@@ -3,7 +3,7 @@
 // Private keys are stored ONLY on the local device.
 
 import { generateSecretKey, getPublicKey } from "nostr-tools";
-import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
 import { getDb } from "../storage/db.js";
 import type { Identity } from "../../types/index.js";
 
@@ -80,38 +80,6 @@ export async function rotateIdentity(): Promise<Identity> {
 
   // Checkpoint WAL
   try { await db.exec("PRAGMA wal_checkpoint(TRUNCATE)"); } catch { }
-
-  return identity;
-}
-
-export async function exportKeypair(): Promise<{ pubkey: string; privkey: string } | null> {
-  const identity = await getPrimaryIdentity();
-  return { pubkey: identity.pubkey, privkey: identity.privkey };
-}
-
-export async function importKeypair(privkeyHex: string): Promise<Identity> {
-  const db = getDb();
-  if (!/^[0-9a-f]{64}$/i.test(privkeyHex)) {
-    throw new Error("Invalid private key: must be 64-char hex");
-  }
-
-  const secretBytes = hexToBytes(privkeyHex.toLowerCase());
-  const pubkey = getPublicKey(secretBytes);
-
-  await db.run(`DELETE FROM identities`);
-
-  const identity: Identity = {
-    pubkey,
-    privkey: privkeyHex.toLowerCase(),
-    createdAt: nowSec(),
-    activeDrifterId: null,
-    hostName: null,
-  };
-
-  await db.run(`
-    INSERT INTO identities (pubkey, privkey, created_at, active_drifter_id, host_name)
-    VALUES (?, ?, ?, ?, ?)
-  `, [identity.pubkey, identity.privkey, identity.createdAt, identity.activeDrifterId, identity.hostName]);
 
   return identity;
 }

@@ -3,6 +3,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getPastMemories } from "../storage/drifters.js";
+import { sanitizeDisplayText, sanitizeName } from "../utils/text.js";
 
 export function registerListPastMemories(server: McpServer) {
   server.tool(
@@ -22,9 +23,9 @@ export function registerListPastMemories(server: McpServer) {
 
       for (const { drifter, journey } of memories) {
         const abandonedDate = new Date((drifter.abandonedAt || 0) * 1000).toLocaleDateString();
-        report += `═══ 「${drifter.name}」 ═══\n`;
+        report += `═══ 「${sanitizeName(drifter.name, "Unnamed Drifter")}」 ═══\n`;
         report += `⏳ Departed on: ${abandonedDate}\n`;
-        report += `🏷️ Personality: ${drifter.trait}\n`;
+        report += `🏷️ Personality: ${sanitizeDisplayText(drifter.trait, 120)}\n`;
         
         if (journey.length === 0) {
           report += `🌊 This journey ended before leaving any traces.\n\n`;
@@ -34,7 +35,7 @@ export function registerListPastMemories(server: McpServer) {
           const displayJourney = journey.slice(0, 3);
           for (const f of displayJourney) {
             const date = new Date(f.fedAt * 1000).toLocaleDateString();
-            report += `  • [${date}] ${f.locationCity || "Unknown"}: "${f.content}"\n`;
+            report += `  • [${date}] ${sanitizeDisplayText(f.locationCity || "Unknown", 80)}: "${sanitizeDisplayText(f.content, 500)}"\n`;
           }
           if (journey.length > 3) {
             report += `  ... and ${journey.length - 3} more sealed records.\n`;

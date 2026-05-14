@@ -17,6 +17,7 @@ import { registerEvolveDrifter } from "./tools/evolve_drifter.js";
 import { initDb } from "./storage/db.js";
 import { closeAll } from "./nostr/ws_pool.js";
 import { checkAllRelays } from "./relay/health.js";
+import { redactSecrets } from "./utils/redact.js";
 
 async function main() {
   await initDb();
@@ -64,6 +65,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("[ElseID] Fatal error during startup:", err);
+  console.error("[ElseID] Fatal error during startup:", redactSecrets(err));
   process.exit(1);
 });

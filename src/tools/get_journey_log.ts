@@ -6,6 +6,7 @@ import { buildFeedingFilter } from "../nostr/filter.js";
 import { subscribeMany } from "../nostr/ws_pool.js";
 import { getMyActiveDrifter, saveIncomingFeeding, getMyDrifterJourney } from "../storage/drifters.js";
 import { getTag } from "../nostr/event_builder.js";
+import { sanitizeDisplayText, sanitizeName } from "../utils/text.js";
 
 export function registerGetJourneyLog(server: McpServer) {
   server.tool(
@@ -43,25 +44,26 @@ export function registerGetJourneyLog(server: McpServer) {
       const localJourney = await getMyDrifterJourney(drifter.id);
 
       const ageDays = Math.floor((Date.now() / 1000 - drifter.departedAt) / 86400);
+      const drifterName = sanitizeName(drifter.name, "Unnamed Drifter");
       
-      let report = `Latest journey records received for 「${drifter.name}」 (${ageDays} days at sea):\n\n`;
+      let report = `Latest journey records received for 「${drifterName}」 (${ageDays} days at sea):\n\n`;
 
       if (localJourney.length === 0) {
         report += "📍 Origin Station: " + (drifter.relay.includes("//") ? drifter.relay.split("//")[1].split("/")[0] : "Unknown") + "\n";
         report += "🌊 Current Status: Looking for the first person to host it.\n";
       } else {
         const latest = localJourney[0];
-        const latestLoc = [latest.locationCity, latest.locationCountry].filter(Boolean).join(" · ") || "Unknown Location";
+        const latestLoc = [latest.locationCity, latest.locationCountry].map((v) => sanitizeDisplayText(v, 80)).filter(Boolean).join(" · ") || "Unknown Location";
         report += `📍 Current Location: ${latestLoc}\n`;
-        report += `📝 Latest Encounter: "${latest.content}"\n`;
+        report += `📝 Latest Encounter: "${sanitizeDisplayText(latest.content, 500)}"\n`;
         report += `🌊 Current Status: Continuing the journey.\n\n`;
         report += `--- Complete Journey Log ---\n`;
         
         for (const f of localJourney) {
-          const location = [f.locationCity, f.locationCountry].filter(Boolean).join(" · ") || "Unknown";
+          const location = [f.locationCity, f.locationCountry].map((v) => sanitizeDisplayText(v, 80)).filter(Boolean).join(" · ") || "Unknown";
           const date = new Date(f.fedAt * 1000).toLocaleDateString();
-          const hostLabel = f.feederName ? `Host 「${f.feederName}」` : "A Host";
-          report += `[${date}] ${location}: ${hostLabel} shared ${f.feedType} -> "${f.content}"\n`;
+          const hostLabel = f.feederName ? `Host 「${sanitizeName(f.feederName, "Host")}」` : "A Host";
+          report += `[${date}] ${location}: ${hostLabel} shared ${f.feedType} -> "${sanitizeDisplayText(f.content, 500)}"\n`;
         }
       }
 

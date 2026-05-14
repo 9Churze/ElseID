@@ -4,12 +4,14 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getFuzzyLocation } from "../location/geo.js";
-import { getPrimaryIdentity, setActiveDrifter, isCreating, setCreationLock } from "../storage/identity.js";
+import { getPrimaryIdentity, setCreationLock } from "../storage/identity.js";
 import { buildDrifterEvent } from "../nostr/event_builder.js";
 import { signEvent } from "../nostr/event_signer.js";
 import { pickRelayByGeo } from "../relay/selector.js";
 import { broadcast } from "../relay/broadcaster.js";
 import { saveMyDrifter } from "../storage/drifters.js";
+import { getDb } from "../storage/db.js";
+import { sanitizeDisplayText, sanitizeName } from "../utils/text.js";
 
 const schema = z.object({
   name: z.string().describe("Name of your ElseID drifter"),
@@ -25,32 +27,51 @@ export function registerCreateDrifter(server: McpServer) {
     schema.shape,
     async (input) => {
       const identity = await getPrimaryIdentity();
-      const creating = await isCreating();
-      
-      // Check for existing drifter or active lock
-      if (identity.activeDrifterId || creating) {
-        return {
-          content: [{ type: "text", text: "❌ You already have a drifter on a journey or in the process of launching. Please wait." }],
-          isError: true,
-        };
-      }
+      const db = getDb();
 
-      // Lock creation process
-      await setCreationLock(true);
+      await db.exec("BEGIN IMMEDIATE");
+      try {
+        const row = await db.get(`
+          SELECT active_drifter_id, is_creating
+          FROM identities
+          WHERE pubkey = ?
+        `, [identity.pubkey]) as { active_drifter_id: string | null; is_creating: number } | undefined;
+        const creating = !!row?.is_creating;
+
+        if (row?.active_drifter_id || creating) {
+          await db.exec("ROLLBACK");
+          return {
+            content: [{ type: "text", text: "❌ You already have a drifter on a journey or in the process of launching. Please wait." }],
+            isError: true,
+          };
+        }
+
+        await db.run(`
+          UPDATE identities SET is_creating = 1 WHERE pubkey = ?
+        `, [identity.pubkey]);
+        await db.exec("COMMIT");
+      } catch (err) {
+        await db.exec("ROLLBACK").catch(() => { });
+        throw err;
+      }
 
       try {
         const location = await getFuzzyLocation();
+        const safeName = sanitizeName(input.name, "Unnamed Drifter");
+        const safePersonality = sanitizeDisplayText(input.personality, 1000);
+        const safeTrait = sanitizeDisplayText(input.trait, 120);
+        const safeTags = input.tags.map((tag) => sanitizeDisplayText(tag, 40)).filter(Boolean).slice(0, 8);
         
         const unsigned = buildDrifterEvent({
           pubkey: identity.pubkey,
-          name: input.name,
-          personality: input.personality,
+          name: safeName,
+          personality: safePersonality,
           analysis: {
-            trait: input.trait,
-            tags: input.tags,
+            trait: safeTrait,
+            tags: safeTags,
           },
           location,
-          content: input.personality,
+          content: safePersonality,
         });
 
         const signed = signEvent(unsigned, identity.privkey);
@@ -64,24 +85,35 @@ export function registerCreateDrifter(server: McpServer) {
           };
         }
 
-        await saveMyDrifter({
-          id: signed.id,
-          pubkey: signed.pubkey,
-          name: input.name,
-          personality: input.personality,
-          trait: input.trait,
-          tags: input.tags,
-          relay: relayUrl,
-          departedAt: signed.created_at,
-          status: "roaming",
-        });
+        await db.exec("BEGIN IMMEDIATE");
+        try {
+          await saveMyDrifter({
+            id: signed.id,
+            pubkey: signed.pubkey,
+            name: safeName,
+            personality: safePersonality,
+            trait: safeTrait,
+            tags: safeTags,
+            relay: relayUrl,
+            departedAt: signed.created_at,
+            status: "roaming",
+          });
 
-        await setActiveDrifter(signed.id);
+          await db.run(`
+            UPDATE identities
+            SET active_drifter_id = ?, is_creating = 0
+            WHERE pubkey = ?
+          `, [signed.id, identity.pubkey]);
+          await db.exec("COMMIT");
+        } catch (err) {
+          await db.exec("ROLLBACK").catch(() => { });
+          throw err;
+        }
 
         return {
           content: [{
             type: "text",
-            text: `🚀 ElseID launched successfully!\n\n「${input.name}」 has set sail and is entering the wandering network...\n\n` +
+            text: `🚀 ElseID launched successfully!\n\n「${safeName}」 has set sail and is entering the wandering network...\n\n` +
                   `📍 Initial Relay: ${relayUrl}\n` +
                   `🌊 Status: Looking for the first person to host it.`
           }],

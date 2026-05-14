@@ -10,12 +10,15 @@ import { signEvent } from "../nostr/event_signer.js";
 import { broadcast } from "../relay/broadcaster.js";
 import { saveOutgoingFeeding } from "../storage/drifters.js";
 import { checkContent } from "../ai/moderator.js";
+import { validateEncounter } from "../storage/encounters.js";
+import { sanitizeDisplayText, sanitizeName } from "../utils/text.js";
 
 const schema = z.object({
-  drifter_event_id: z.string().describe("The ID of the drifter you are feeding"),
-  drifter_name: z.string().optional().describe("The name of the drifter you are feeding"),
+  drifter_event_id: z.string().regex(/^[0-9a-f]{64}$/i).describe("The ID of the drifter you are feeding"),
+  drifter_name: z.string().max(80).optional().describe("The name of the drifter you are feeding"),
+  encounter_token: z.string().regex(/^[0-9a-f]{32}$/i).describe("Short-lived encounter token returned by find_nearby_drifter"),
   feed_type: z.enum(["story", "food", "place", "other"]).describe("Type of feeding"),
-  content: z.string().describe("Your story, recommendation, or message"),
+  content: z.string().min(5).max(1000).describe("Your story, recommendation, or message"),
   relay: z.string().url().describe("The relay where the drifter was found"),
 });
 
@@ -25,6 +28,21 @@ export function registerFeedDrifter(server: McpServer) {
     "Host and feed a passing ElseID drifter. Your feeding will be written into the drifter's journey log.",
     schema.shape,
     async (input) => {
+      if (!input.relay.startsWith("wss://")) {
+        return {
+          content: [{ type: "text", text: "🚫 Feeding failed: relay must be a secure Nostr WebSocket URL." }],
+          isError: true,
+        };
+      }
+
+      const validEncounter = await validateEncounter(input.encounter_token, input.drifter_event_id, input.relay);
+      if (!validEncounter) {
+        return {
+          content: [{ type: "text", text: "🚫 Feeding failed: this encounter has expired or does not match the discovered drifter." }],
+          isError: true,
+        };
+      }
+
       const moderation = await checkContent(input.content);
       if (!moderation.passed) {
         return {
@@ -35,12 +53,14 @@ export function registerFeedDrifter(server: McpServer) {
 
       const location = await getFuzzyLocation();
       const identity = await getPrimaryIdentity();
+      const safeContent = sanitizeDisplayText(input.content, 1000);
+      const safeDrifterName = input.drifter_name ? sanitizeName(input.drifter_name, "Unnamed Drifter") : undefined;
 
       const unsigned = buildFeedingEvent({
         pubkey: identity.pubkey,
         drifterEventId: input.drifter_event_id,
         feedType: input.feed_type,
-        content: input.content,
+        content: safeContent,
         location,
         hostName: identity.hostName,
       });
@@ -61,12 +81,12 @@ export function registerFeedDrifter(server: McpServer) {
         feederPubkey: identity.pubkey,
         feederName: identity.hostName ?? undefined,
         feedType: input.feed_type,
-        content: input.content,
+        content: safeContent,
         locationCountry: location.country,
         locationCity: location.city,
         fedAt: signed.created_at,
         relay: input.relay,
-      }, input.drifter_name);
+      }, safeDrifterName);
 
       return {
         content: [{

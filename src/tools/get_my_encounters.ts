@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getMyEncounters } from "../storage/drifters.js";
+import { sanitizeDisplayText, sanitizeName } from "../utils/text.js";
 
 export function registerGetMyEncounters(server: McpServer) {
   server.tool(
@@ -18,9 +19,9 @@ export function registerGetMyEncounters(server: McpServer) {
       let text = "📖 Your Encounters Log:\n\n";
       for (const enc of encounters) {
         const date = new Date(enc.fedAt * 1000).toLocaleString();
-        const drifterInfo = enc.drifterName ? `「${enc.drifterName}」` : `Drifter (${enc.drifterId.slice(0, 8)}...)`;
+        const drifterInfo = enc.drifterName ? `「${sanitizeName(enc.drifterName, "Unnamed Drifter")}」` : `Drifter (${enc.drifterId.slice(0, 8)}...)`;
         text += `- [${date}] Hosted ${drifterInfo} at ${enc.relay}\n`;
-        text += `  You shared (${enc.feedType}): "${enc.content}"\n\n`;
+        text += `  You shared (${enc.feedType}): "${sanitizeDisplayText(enc.content, 500)}"\n\n`;
       }
 
       return {

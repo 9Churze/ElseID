@@ -8,7 +8,8 @@ import { subscribeMany } from "../nostr/ws_pool.js";
 import { DEFAULT_RELAYS } from "../../config/relays.js";
 import { DRIFTER_KIND } from "../../types/index.js";
 import { getTag } from "../nostr/event_builder.js";
-import { saveMyDrifter, getDrifter } from "../storage/drifters.js";
+import { getDrifter, saveDrifterLineage, saveMyDrifter } from "../storage/drifters.js";
+import { sanitizeDisplayText, sanitizeName } from "../utils/text.js";
 
 const schema = z.object({
   drifter_id: z.string().optional().describe("Specific ID to recover (if known)"),
@@ -21,6 +22,12 @@ export function registerRecoverDrifter(server: McpServer) {
     schema.shape,
     async (input) => {
       const identity = await getPrimaryIdentity();
+      if (identity.activeDrifterId) {
+        return {
+          content: [{ type: "text", text: "🛑 You already have an active drifter under your guidance. Recovery is only for lost local links." }],
+          isError: true,
+        };
+      }
       
       // Scan relays for drifter events by this pubkey
       const relayUrls = DEFAULT_RELAYS.map(r => r.url);
@@ -32,15 +39,20 @@ export function registerRecoverDrifter(server: McpServer) {
       } as any;
 
       const remoteEvents = await subscribeMany(relayUrls, filter);
+      const candidates = input.drifter_id
+        ? remoteEvents.filter(item => item.event.id === input.drifter_id)
+        : remoteEvents;
       
-      if (remoteEvents.length === 0) {
+      if (candidates.length === 0) {
         return {
-          content: [{ type: "text", text: "🏮 The signal is weak. No soul imprint belonging to you was sensed in this sector." }],
+          content: [{ type: "text", text: input.drifter_id
+            ? "🏮 The specified soul imprint could not be found in this sector."
+            : "🏮 The signal is weak. No soul imprint belonging to you was sensed in this sector." }],
         };
       }
 
       // Filter for ones not currently marked active in DB
-      const orphaned = remoteEvents.filter(item => item.event.id !== identity.activeDrifterId);
+      const orphaned = candidates.filter(item => item.event.id !== identity.activeDrifterId);
 
       if (orphaned.length === 0) {
         return {
@@ -58,14 +70,18 @@ export function registerRecoverDrifter(server: McpServer) {
         await saveMyDrifter({
           id: event.id,
           pubkey: event.pubkey,
-          name: getTag(event.tags, "name") || "Recovered Drifter",
-          personality: getTag(event.tags, "personality") || event.content,
-          trait: getTag(event.tags, "trait") || "Unknown",
-          tags: event.tags.filter(([k]) => k === "t").map(([, v]) => v),
+          name: sanitizeName(getTag(event.tags, "name"), "Recovered Drifter"),
+          personality: sanitizeDisplayText(getTag(event.tags, "personality") || event.content, 1000),
+          trait: sanitizeDisplayText(getTag(event.tags, "trait") || "Unknown", 120),
+          tags: event.tags.filter(([k]) => k === "t").map(([, v]) => sanitizeDisplayText(v, 40)).filter(Boolean),
           relay: picked.relay,
           departedAt: event.created_at,
           status: "roaming",
         });
+        const parentId = getTag(event.tags, "evolved_from");
+        if (parentId && /^[0-9a-f]{64}$/i.test(parentId)) {
+          await saveDrifterLineage(parentId, event.id, "recovered lineage", event.created_at);
+        }
       }
 
       // Set it as active
@@ -74,7 +90,7 @@ export function registerRecoverDrifter(server: McpServer) {
       return {
         content: [{
           type: "text",
-          text: `✨ Soul retrieved.\n\nSuccessfully found and synchronized the signal for drifter 「${getTag(event.tags, "name") || "Unknown"}」.\n` +
+          text: `✨ Soul retrieved.\n\nSuccessfully found and synchronized the signal for drifter 「${sanitizeName(getTag(event.tags, "name"), "Unknown")}」.\n` +
                 `It is currently at ${picked.relay}, waiting for your next instruction.`
         }],
       };

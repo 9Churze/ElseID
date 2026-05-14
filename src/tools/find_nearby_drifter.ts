@@ -9,6 +9,8 @@ import { pickRelaysForFetch } from "../relay/selector.js";
 import { hasHostedBefore } from "../storage/drifters.js";
 import { getTag } from "../nostr/event_builder.js";
 import { getPrimaryIdentity } from "../storage/identity.js";
+import { saveEncounter } from "../storage/encounters.js";
+import { sanitizeDisplayText, sanitizeName } from "../utils/text.js";
 
 export function registerFindNearbyDrifter(server: McpServer) {
   server.tool(
@@ -49,15 +51,20 @@ export function registerFindNearbyDrifter(server: McpServer) {
 
       const event = picked.event;
       const isFamiliar = await hasHostedBefore(event.id);
+      const encounterToken = await saveEncounter(event.id, picked.relay);
 
-      const name = getTag(event.tags, "name") || "Unnamed Drifter";
-      const personality = getTag(event.tags, "personality") || "Unknown";
-      const origin = [getTag(event.tags, "city"), getTag(event.tags, "country")].filter(Boolean).join(", ") || "Corner of the world";
+      const name = sanitizeName(getTag(event.tags, "name"), "Unnamed Drifter");
+      const personality = sanitizeDisplayText(getTag(event.tags, "personality") || "Unknown", 300);
+      const origin = [getTag(event.tags, "city"), getTag(event.tags, "country")]
+        .map((v) => sanitizeDisplayText(v, 80))
+        .filter(Boolean)
+        .join(", ") || "Corner of the world";
+      const message = sanitizeDisplayText(event.content, 500);
 
       const contentItems: Array<{ type: "text"; text: string }> = [
         {
           type: "text",
-          text: JSON.stringify({ _meta: "elseid", isFamiliar, drifterId: event.id, drifterName: name, relay: picked.relay }),
+          text: JSON.stringify({ _meta: "elseid", isFamiliar, drifterId: event.id, drifterName: name, relay: picked.relay, encounterToken }),
         },
         {
           type: "text",
@@ -65,7 +72,7 @@ export function registerFindNearbyDrifter(server: McpServer) {
                `「${name}」\n` +
                `📍 Origin: ${origin}\n` +
                `🏷️ Personality: ${personality}\n` +
-               `💬 Message: "${event.content}"\n\n` +
+               `💬 Message: "${message}"\n\n` +
                `It is temporarily staying at your terminal. Would you like to leave something for it?\n\n` +
                `You can perform the following feedings:\n` +
                `- [A] Leave a message (feed_drifter type="story")\n` +

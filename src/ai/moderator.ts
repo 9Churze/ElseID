@@ -5,17 +5,18 @@
 import type { ModerationResult } from "../../types/index.js";
 
 export async function checkContent(content: string): Promise<ModerationResult> {
-  const normalized = content.toLowerCase();
+  const normalized = normalizeForModeration(content);
+  const compact = normalized.replace(/[\s._\-:：/\\|]+/g, "");
 
   const contactPatterns = [
-    /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, // Email
-    /(\+86|0)?1[3-9]\d{9}/g,                          // Phone (CN)
-    /(https?:\/\/|www\.)\S+/g,                        // URLs
-    /(v|wx|id|tel|mail|qq|tg|@):?\s*[a-zA-Z0-9_-]{3,}/g, // Social IDs
+    /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/, // Email
+    /(\+86|0)?1[3-9]\d{9}/,                          // Phone (CN)
+    /(https?:\/\/|www\.)\S+/,                        // URLs
+    /(v|wx|id|tel|mail|qq|tg|@):?\s*[a-zA-Z0-9_-]{3,}/, // Social IDs
   ];
 
   for (const pattern of contactPatterns) {
-    if (pattern.test(content)) {
+    if (pattern.test(normalized) || pattern.test(compact)) {
       return {
         passed: false,
         reason: "Content contains contact information (Email/Phone/URL/ID) which is prohibited for anonymity."
@@ -58,4 +59,12 @@ export async function checkContent(content: string): Promise<ModerationResult> {
   }
 
   return { passed: true };
+}
+
+function normalizeForModeration(content: string): string {
+  return content
+    .normalize("NFKC")
+    .replace(/[\u200B-\u200D\uFEFF\u2060]/g, "")
+    .replace(/[\u202A-\u202E\u2066-\u2069]/g, "")
+    .toLowerCase();
 }

@@ -145,6 +145,14 @@ export async function getMyEncounters(): Promise<(Feeding & { drifterName?: stri
   return rows.map(rowToFeeding);
 }
 
+export async function saveDrifterLineage(parentId: string, childId: string, reason: string, evolvedAt: number): Promise<void> {
+  const db = getDb();
+  await db.run(`
+    INSERT OR REPLACE INTO drifter_lineage (child_id, parent_id, reason, evolved_at)
+    VALUES (?, ?, ?, ?)
+  `, [childId, parentId, reason, evolvedAt]);
+}
+
 // Row mapping
 
 function rowToDrifter(row: any): Drifter {

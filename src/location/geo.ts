@@ -1,6 +1,6 @@
 // ElseID — src/location/geo.ts
 // IP → coarse city-level FuzzyLocation.
-// Precision is intentionally limited to protect user privacy.
+// Coordinates are intentionally not retained for relay-bound events.
 
 import type { FuzzyLocation } from "../../types/index.js";
 
@@ -44,15 +44,15 @@ export function makeFuzzyLocation(
 
 // Helpers
 
-function truncate(lat: number, lon: number, country: string, city: string): FuzzyLocation {
+function truncate(_lat: number, _lon: number, country: string, city: string): FuzzyLocation {
   return {
     country: (country ?? "").toUpperCase().slice(0, 2),
     city:    (city    ?? "Unknown").slice(0, 50),
-    lat:     (Math.trunc(lat * 10) / 10).toFixed(1),
-    lon:     (Math.trunc(lon * 10) / 10).toFixed(1),
+    lat:     "",
+    lon:     "",
   };
 }
 
 function fallback(): FuzzyLocation {
-  return { country: "XX", city: "Unknown", lat: "0.0", lon: "0.0" };
+  return { country: "XX", city: "Unknown", lat: "", lon: "" };
 }

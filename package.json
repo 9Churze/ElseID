@@ -10,6 +10,13 @@
     "url": "https://github.com/9Churze/ElseID.git"
   },
   "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
   "bin": {
     "create-elseid": "dist/scripts/cli.js"
   },

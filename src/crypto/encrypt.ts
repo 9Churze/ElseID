@@ -3,8 +3,8 @@
 // Uses AES-256-CBC with ECDH shared secret (secp256k1).
 
 import { getSharedSecret, getPublicKey } from "@noble/secp256k1";
-import { bytesToHex, hexToBytes, randomBytes } from "@noble/hashes/utils";
-import { sha256 }     from "@noble/hashes/sha256";
+import { bytesToHex, hexToBytes, randomBytes } from "@noble/hashes/utils.js";
+import { sha256 }     from "@noble/hashes/sha256.js";
 import { createCipheriv, createDecipheriv } from "crypto";
 
 // Shared secret derivation
@@ -16,7 +16,7 @@ function deriveSharedSecret(privkeyHex: string, pubkeyHex: string): Buffer {
       ? hexToBytes("02" + pubkeyHex) // x-only → compressed
       : hexToBytes(pubkeyHex);
 
-  const shared = getSharedSecret(privkeyHex, pubkeyBytes);
+  const shared = getSharedSecret(hexToBytes(privkeyHex), pubkeyBytes);
   // NIP-04: use only the x-coordinate (first 32 bytes, skip leading 0x02)
   return Buffer.from(sha256(shared.slice(1, 33)));
 }
@@ -78,7 +78,7 @@ export function decryptContent(
 export function generateEphemeralRecipient(): { pubkey: string; privkey: string } {
   const privBytes = randomBytes(32);
   const privkey   = bytesToHex(privBytes);
-  const pubkeyFull = getPublicKey(privkey, true); // compressed
+  const pubkeyFull = getPublicKey(privBytes, true); // compressed (using bytes directly for v3)
   const pubkey    = bytesToHex(pubkeyFull.slice(1)); // x-only
 
   return { pubkey, privkey };

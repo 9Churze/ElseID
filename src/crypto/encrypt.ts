@@ -4,7 +4,7 @@
 
 import { getSharedSecret, getPublicKey } from "@noble/secp256k1";
 import { bytesToHex, hexToBytes, randomBytes } from "@noble/hashes/utils.js";
-import { sha256 }     from "@noble/hashes/sha256.js";
+import { sha256 }     from "@noble/hashes/sha2.js";
 import { createCipheriv, createDecipheriv } from "crypto";
 
 // Shared secret derivation

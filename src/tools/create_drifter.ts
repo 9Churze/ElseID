@@ -4,13 +4,13 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getFuzzyLocation } from "../location/geo.js";
-import { getPrimaryIdentity, setCreationLock } from "../storage/identity.js";
 import { buildDrifterEvent } from "../nostr/event_builder.js";
 import { signEvent } from "../nostr/event_signer.js";
 import { pickRelayByGeo } from "../relay/selector.js";
 import { broadcast } from "../relay/broadcaster.js";
 import { saveMyDrifter } from "../storage/drifters.js";
 import { getDb } from "../storage/db.js";
+import { isCreating, setCreationLock, getActiveDrifterId, getPrimaryIdentity } from "../storage/identity.js";
 import { sanitizeDisplayText, sanitizeName } from "../utils/text.js";
 
 const schema = z.object({
@@ -29,31 +29,17 @@ export function registerCreateDrifter(server: McpServer) {
       const identity = await getPrimaryIdentity();
       const db = getDb();
 
-      await db.exec("BEGIN IMMEDIATE");
-      try {
-        const row = await db.get(`
-          SELECT active_drifter_id, is_creating
-          FROM identities
-          WHERE pubkey = ?
-        `, [identity.pubkey]) as { active_drifter_id: string | null; is_creating: number } | undefined;
-        const creating = !!row?.is_creating;
+      const creating = await isCreating();
+      const activeId = await getActiveDrifterId();
 
-        if (row?.active_drifter_id || creating) {
-          await db.exec("ROLLBACK");
-          return {
-            content: [{ type: "text", text: "❌ You already have a drifter on a journey or in the process of launching. Please wait." }],
-            isError: true,
-          };
-        }
-
-        await db.run(`
-          UPDATE identities SET is_creating = 1 WHERE pubkey = ?
-        `, [identity.pubkey]);
-        await db.exec("COMMIT");
-      } catch (err) {
-        await db.exec("ROLLBACK").catch(() => { });
-        throw err;
+      if (activeId || creating) {
+        return {
+          content: [{ type: "text", text: "❌ You already have a drifter on a journey or in the process of launching. Please wait." }],
+          isError: true,
+        };
       }
+
+      await setCreationLock(true);
 
       try {
         const location = await getFuzzyLocation();

@@ -52,6 +52,7 @@ function getOrOpen(relayUrl: string): Promise<WebSocket> {
     });
 
     ws.once("close", () => {
+      clearTimeout(timer);
       _connections.delete(relayUrl);
       _connecting.delete(relayUrl);
     });
@@ -140,7 +141,13 @@ export async function subscribe(
     ws.on("message", onMessage);
     ws.on("close", onAbort);
     ws.on("error", onAbort);
-    ws.send(JSON.stringify(["REQ", subId, filter]));
+    
+    try {
+      ws.send(JSON.stringify(["REQ", subId, filter]));
+    } catch (err) {
+      cleanup();
+      resolve(results);
+    }
   });
 }
 
@@ -286,7 +293,11 @@ export async function subscribeRaceFirst(
           ws.on("error", onAbort);
           abortController.signal.addEventListener("abort", onAbort);
 
-          ws.send(JSON.stringify(["REQ", subId, filter]));
+          try {
+            ws.send(JSON.stringify(["REQ", subId, filter]));
+          } catch (err) {
+            closeRelay();
+          }
         }).catch(() => {
           finishRelay();
         });

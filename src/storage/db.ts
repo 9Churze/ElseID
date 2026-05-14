@@ -95,6 +95,7 @@ export async function initDb(): Promise<void> {
       created_at  INTEGER NOT NULL,
       active_drifter_id TEXT,
       is_creating INTEGER DEFAULT 0,
+      creating_at INTEGER,
       host_name   TEXT
     );
 
@@ -129,6 +130,9 @@ export async function initDb(): Promise<void> {
     const tableInfo = await _db.all(`PRAGMA table_info(identities)`);
     if (!tableInfo.some(col => col.name === 'host_name')) {
       await _db.exec(`ALTER TABLE identities ADD COLUMN host_name TEXT`);
+    }
+    if (!tableInfo.some(col => col.name === 'creating_at')) {
+      await _db.exec(`ALTER TABLE identities ADD COLUMN creating_at INTEGER`);
     }
 
     const feedingsInfo = await _db.all(`PRAGMA table_info(feedings)`);

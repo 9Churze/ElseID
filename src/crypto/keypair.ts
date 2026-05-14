@@ -69,7 +69,9 @@ export async function setActiveDrifter(drifterId: string | null): Promise<void> 
 
 export async function rotateIdentity(): Promise<Identity> {
   const db = getDb();
-  // Shred the old private key in-place with random data (encrypted)
+  await db.exec("BEGIN IMMEDIATE");
+  try {
+    // Shred the old private key in-place with random data (encrypted)
   const scrub = encrypt(bytesToHex(generateSecretKey()));
   await db.run(`UPDATE identities SET privkey = ?`, [scrub]);
 
@@ -85,8 +87,13 @@ export async function rotateIdentity(): Promise<Identity> {
     VALUES (?, ?, ?, ?, ?)
   `, [identity.pubkey, encrypt(identity.privkey), identity.createdAt, identity.activeDrifterId, identity.hostName]);
 
-  // Checkpoint WAL
-  try { await db.exec("PRAGMA wal_checkpoint(TRUNCATE)"); } catch { }
+    // Checkpoint WAL
+    try { await db.exec("PRAGMA wal_checkpoint(TRUNCATE)"); } catch { }
 
-  return identity;
+    await db.exec("COMMIT");
+    return identity;
+  } catch (err) {
+    await db.exec("ROLLBACK").catch(() => { });
+    throw err;
+  }
 }

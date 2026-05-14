@@ -59,7 +59,9 @@ export async function evolveCognition(oldDrifter: Drifter, input: EvolutionInput
     name: oldDrifter.name,
     personality: input.newPersonality,
     trait: input.newTrait,
-    tags: unsigned.tags.filter(t => t[0] === "t" || t[0] === "skill" || t[0] === "item").map(t => typeof t === "string" ? t : (t[1] || t[0])), 
+    tags: unsigned.tags
+      .filter(t => t[0] === "t" || t[0] === "skill" || t[0] === "item")
+      .map(t => (t[0] === "t" ? t[1] : `${t[0]}:${t[1]}`)), 
     relay: oldDrifter.relay,
     departedAt: signed.created_at,
     status: "roaming",

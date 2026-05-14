@@ -2,6 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { setHostName } from "../storage/identity.js";
 import { sanitizeName } from "../utils/text.js";
+import { sanitizeErrorMessage } from "../utils/errors.js";
 
 export function registerSetHostName(server: McpServer) {
   server.tool(
@@ -19,7 +20,7 @@ export function registerSetHostName(server: McpServer) {
         };
       } catch (err: any) {
         return {
-          content: [{ type: "text", text: `Error: Could not set host name. ${err.message}` }],
+          content: [{ type: "text", text: `Error: Could not set host name. ${sanitizeErrorMessage(err)}` }],
         };
       }
     }

@@ -12,6 +12,7 @@ import { saveMyDrifter } from "../storage/drifters.js";
 import { getDb } from "../storage/db.js";
 import { isCreating, setCreationLock, getActiveDrifterId, getPrimaryIdentity } from "../storage/identity.js";
 import { sanitizeDisplayText, sanitizeName } from "../utils/text.js";
+import { sanitizeErrorMessage } from "../utils/errors.js";
 
 const schema = z.object({
   name: z.string().describe("Name of your ElseID drifter"),
@@ -66,7 +67,7 @@ export function registerCreateDrifter(server: McpServer) {
 
         if (!result.success) {
           return {
-            content: [{ type: "text", text: `⚠️ Launch failed: ${result.message}` }],
+            content: [{ type: "text", text: `⚠️ Launch failed: ${sanitizeErrorMessage(result.message)}` }],
             isError: true,
           };
         }

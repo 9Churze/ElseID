@@ -9,16 +9,6 @@ import fs from "fs";
 const DATA_DIR = process.env.ELSEID_DATA_DIR || path.join(os.homedir(), ".elseid");
 const DB_PATH = path.join(DATA_DIR, "elseid.db");
 
-try {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });
-  } else {
-    fs.chmodSync(DATA_DIR, 0o700);
-  }
-} catch (err) {
-  console.warn(`⚠️ Failed to set permissions on data directory ${DATA_DIR}:`, err);
-}
-
 let _db: Database | null = null;
 
 export function getDb(): Database {
@@ -27,6 +17,17 @@ export function getDb(): Database {
 }
 
 export async function initDb(): Promise<void> {
+  // Ensure data directory exists with correct permissions
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });
+    } else {
+      fs.chmodSync(DATA_DIR, 0o700);
+    }
+  } catch (err) {
+    console.warn(`⚠️ Failed to set permissions on data directory ${DATA_DIR}:`, err);
+  }
+
   // Use sqlite3.Database as the driver
   _db = await open({
     filename: DB_PATH,

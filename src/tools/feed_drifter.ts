@@ -12,6 +12,7 @@ import { saveOutgoingFeeding } from "../storage/drifters.js";
 import { checkContent } from "../ai/moderator.js";
 import { validateEncounter } from "../storage/encounters.js";
 import { sanitizeDisplayText, sanitizeName } from "../utils/text.js";
+import { sanitizeErrorMessage } from "../utils/errors.js";
 
 const schema = z.object({
   drifter_event_id: z.string().regex(/^[0-9a-f]{64}$/i).describe("The ID of the drifter you are feeding"),
@@ -70,7 +71,7 @@ export function registerFeedDrifter(server: McpServer) {
 
       if (!result.success) {
         return {
-          content: [{ type: "text", text: `⚠️ Feeding failed: ${result.message}` }],
+          content: [{ type: "text", text: `⚠️ Feeding failed: ${sanitizeErrorMessage(result.message)}` }],
           isError: true,
         };
       }

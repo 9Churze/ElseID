@@ -2,7 +2,7 @@
 // WebSocket connection pool. Manages relay connections and
 // handles REQ/EOSE/EVENT/CLOSE Nostr protocol messages.
 
-import WebSocket from "ws";
+import { WebSocket } from "ws";
 import { WS_TIMEOUT_MS, FETCH_LIMIT } from "../../config/relays.js";
 import { newSubId } from "./filter.js";
 import { verifySignature } from "./event_signer.js";

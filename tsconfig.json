@@ -3,7 +3,6 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "moduleDetection": "force",
     "rootDir": ".",
     "outDir": "./dist",
     "strict": true,
@@ -11,9 +10,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "verbatimModuleSyntax": true
+    "sourceMap": true
   },
   "include": ["src/**/*", "config/**/*", "types/**/*", "scripts/**/*"],
   "exclude": ["node_modules", "dist", "tests"]

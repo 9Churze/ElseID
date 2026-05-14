@@ -1,10 +1,10 @@
 {
   "name": "elseid-mcp",
-  "version": "0.1.0",
-  "description": "Zero-config decentralized AI drift bottle system over Nostr",
+  "version": "0.2.1",
+  "description": "Zero-config decentralized AI drifter system over Nostr",
   "type": "module",
   "author": "ElseID Contributors",
-  "license": "AGPL-3.0",
+  "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "https://github.com/9Churze/ElseID.git"

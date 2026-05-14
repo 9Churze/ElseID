@@ -10,8 +10,11 @@ build/
 coverage/
 .elseid_test/
 .elseid_temp/
+.elseid-lab/
+.elseid_lab/
 .bicean_test/
 .bicean_temp/
+.bicean_lab/
 
 # Configuration & Secrets
 .env
@@ -21,6 +24,9 @@ coverage/
 *.db
 *.db-journal
 *.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
 
 # IDE / Editor
 .vscode/
@@ -31,9 +37,5 @@ coverage/
 .elseid_data/
 .bicean_data/
 
-# Generated reports
-docs/*_report.md
-RECONSTRUCTION_REPORT.md
-
-# Testing/Internal docs
-.elseid-lab/
+# Tests (local test artifacts, not committed)
+tests/

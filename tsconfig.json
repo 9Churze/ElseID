@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ES2022",
-    "moduleResolution": "bundler",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "rootDir": ".",
     "outDir": "./dist",
     "strict": true,
@@ -13,6 +13,6 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "include": ["src/**/*", "config/**/*", "types/**/*"],
+  "include": ["src/**/*", "config/**/*", "types/**/*", "scripts/**/*"],
   "exclude": ["node_modules", "dist", "tests"]
 }

@@ -1,70 +1,68 @@
 // ElseID — src/crypto/encrypt.ts
-// NIP-04 compatible encryption for burn-after-read bottles.
-// Uses AES-256-CBC with ECDH shared secret (secp256k1).
+// Secure encryption for burn-after-read bottles.
+// Uses AES-256-GCM with ECDH shared secret (secp256k1).
+// Note: This is an improvement over NIP-04 which uses CBC without authentication.
 
 import { getSharedSecret, getPublicKey } from "@noble/secp256k1";
 import { bytesToHex, hexToBytes, randomBytes } from "@noble/hashes/utils.js";
 import { sha256 }     from "@noble/hashes/sha2.js";
-import { createCipheriv, createDecipheriv } from "crypto";
+import { createCipheriv, createDecipheriv } from "node:crypto";
 
-// Shared secret derivation
-
+// Shared secret derivation (same as NIP-04 for compatibility in key derivation)
 function deriveSharedSecret(privkeyHex: string, pubkeyHex: string): Buffer {
-  // Ensure the pubkey is the full 33-byte compressed form
   const pubkeyBytes =
     pubkeyHex.length === 64
-      ? hexToBytes("02" + pubkeyHex) // x-only → compressed
+      ? hexToBytes("02" + pubkeyHex)
       : hexToBytes(pubkeyHex);
 
   const shared = getSharedSecret(hexToBytes(privkeyHex), pubkeyBytes);
-  // NIP-04: use only the x-coordinate (first 32 bytes, skip leading 0x02)
   return Buffer.from(sha256(shared.slice(1, 33)));
 }
 
-// Encrypt
-
-export interface EncryptedPayload {
-  /** base64-encoded ciphertext */
-  ciphertext: string;
-  /** base64-encoded 16-byte IV */
-  iv: string;
-}
-
+/**
+ * Encrypts content using AES-256-GCM.
+ * Output format: base64(iv + tag + ciphertext)
+ */
 export function encryptContent(
   plaintext:    string,
   senderPrivHex: string,
   recipientPubHex: string
 ): string {
   const key = deriveSharedSecret(senderPrivHex, recipientPubHex);
-  const iv  = randomBytes(16);
+  const iv  = randomBytes(12); // GCM standard IV size
 
-  const cipher = createCipheriv("aes-256-cbc", key, iv);
+  const cipher = createCipheriv("aes-256-gcm", key, iv);
   const encrypted = Buffer.concat([
     cipher.update(Buffer.from(plaintext, "utf8")),
     cipher.final(),
   ]);
+  const tag = cipher.getAuthTag();
 
-  const ct = encrypted.toString("base64");
-  const ivB64 = Buffer.from(iv).toString("base64");
-
-  return `${ct}?iv=${ivB64}`;
+  // Combine IV + Tag + Ciphertext
+  return Buffer.concat([iv, tag, encrypted]).toString("base64");
 }
 
+/**
+ * Decrypts content using AES-256-GCM.
+ */
 export function decryptContent(
-  ciphertextWithIv: string,
+  combinedB64: string,
   recipientPrivHex: string,
   senderPubHex:     string
 ): string {
-  const [ctB64, ivPart] = ciphertextWithIv.split("?iv=");
-  if (!ctB64 || !ivPart) {
-    throw new Error("Malformed encrypted payload");
+  const combined = Buffer.from(combinedB64, "base64");
+  if (combined.length < 28) { // 12 (IV) + 16 (Tag) + at least 0 (Ciphertext)
+    throw new Error("Invalid encrypted payload");
   }
 
-  const key        = deriveSharedSecret(recipientPrivHex, senderPubHex);
-  const iv         = Buffer.from(ivPart, "base64");
-  const ciphertext = Buffer.from(ctB64, "base64");
+  const iv = combined.subarray(0, 12);
+  const tag = combined.subarray(12, 28);
+  const ciphertext = combined.subarray(28);
 
-  const decipher = createDecipheriv("aes-256-cbc", key, iv);
+  const key = deriveSharedSecret(recipientPrivHex, senderPubHex);
+  const decipher = createDecipheriv("aes-256-gcm", key, iv);
+  decipher.setAuthTag(tag);
+
   const decrypted = Buffer.concat([
     decipher.update(ciphertext),
     decipher.final(),
@@ -73,12 +71,10 @@ export function decryptContent(
   return decrypted.toString("utf8");
 }
 
-// Ephemeral key for burn-after-read
-
 export function generateEphemeralRecipient(): { pubkey: string; privkey: string } {
   const privBytes = randomBytes(32);
   const privkey   = bytesToHex(privBytes);
-  const pubkeyFull = getPublicKey(privBytes, true); // compressed (using bytes directly for v3)
+  const pubkeyFull = getPublicKey(privBytes, true);
   const pubkey    = bytesToHex(pubkeyFull.slice(1)); // x-only
 
   return { pubkey, privkey };

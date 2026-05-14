@@ -12,7 +12,7 @@ export interface NostrEvent {
   id: string;
   pubkey: string;
   created_at: number;
-  kind: typeof DRIFTER_KIND;
+  kind: number;
   tags: string[][];
   content: string;
   sig: string;
@@ -22,7 +22,7 @@ export interface NostrEvent {
 export interface UnsignedEvent {
   pubkey: string;
   created_at: number;
-  kind: typeof DRIFTER_KIND;
+  kind: number;
   tags: string[][];
   content: string;
 }

@@ -67,6 +67,7 @@ export function closeAll(): void {
     ws.close();
     _connections.delete(url);
   }
+  _connecting.clear();
 }
 
 // Subscribe

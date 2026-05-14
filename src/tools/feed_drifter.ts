@@ -29,9 +29,9 @@ export function registerFeedDrifter(server: McpServer) {
     "Host and feed a passing ElseID drifter. Your feeding will be written into the drifter's journey log.",
     schema.shape,
     async (input) => {
-      if (!input.relay.startsWith("wss://")) {
+      if (!/^wss?:\/\//i.test(input.relay)) {
         return {
-          content: [{ type: "text", text: "🚫 Feeding failed: relay must be a secure Nostr WebSocket URL." }],
+          content: [{ type: "text", text: "🚫 Feeding failed: relay must be a Nostr WebSocket URL (ws:// or wss://)." }],
           isError: true,
         };
       }

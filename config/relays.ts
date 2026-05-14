@@ -12,18 +12,25 @@ export interface RelayConfig {
  * Verified Nostr relays based on real-world connectivity tests (v0.2.1).
  * Optimized for low latency and high reliability.
  */
-const GLOBAL_RELAYS: RelayConfig[] = [
-  // ── Verified & Fast (Class A) ──────────────────────────────
-  { url: "wss://nos.lol",              region: "Global", writable: true },
-  { url: "wss://relay.damus.io",       region: "Global", writable: true },
-  { url: "wss://bitcoiner.social",     region: "EU",     writable: true },
-  { url: "wss://nostr.mom",            region: "ASIA",   writable: true },
-  
-  // ── Reliable Fallbacks (Class B) ───────────────────────────
-  { url: "wss://relay.nostr.band",     region: "Global", writable: true },
-  { url: "wss://relay.snort.social",   region: "EU",     writable: true },
-  { url: "wss://nostr.fmt.wiz.biz",    region: "US",     writable: true },
+const DEFAULT_URLS = [
+  "wss://nos.lol",
+  "wss://relay.damus.io",
+  "wss://bitcoiner.social",
+  "wss://nostr.mom",
+  "wss://relay.nostr.band",
+  "wss://relay.snort.social",
+  "wss://nostr.fmt.wiz.biz",
 ];
+
+const envRelays = process.env.ELSEID_RELAYS ? process.env.ELSEID_RELAYS.split(",").map(u => u.trim()).filter(Boolean) : [];
+const ALL_URLS = [...new Set([...envRelays, ...DEFAULT_URLS])];
+
+const GLOBAL_RELAYS: RelayConfig[] = ALL_URLS.map(url => {
+  let region = "Global";
+  if (url.includes(".mom")) region = "ASIA";
+  if (url.includes(".social") || url.includes(".biz")) region = "EU"; // rough guess
+  return { url, region, writable: true };
+});
 
 /**
  * Detect user's language environment and sort relays accordingly.

@@ -6,7 +6,18 @@ import path from "path";
 import os from "os";
 import fs from "fs";
 
-const DATA_DIR = process.env.ELSEID_DATA_DIR || path.join(os.homedir(), ".elseid");
+const DEFAULT_DATA_DIR = path.join(os.homedir(), ".elseid");
+let DATA_DIR = process.env.ELSEID_DATA_DIR || DEFAULT_DATA_DIR;
+
+// Path Traversal Mitigation: Ensure the data directory is absolute and not suspicious
+if (process.env.ELSEID_DATA_DIR) {
+  DATA_DIR = path.resolve(process.env.ELSEID_DATA_DIR);
+  if (!path.isAbsolute(DATA_DIR) || DATA_DIR.includes("..")) {
+    console.error(`❌ Invalid ELSEID_DATA_DIR: ${process.env.ELSEID_DATA_DIR}. Falling back to default.`);
+    DATA_DIR = DEFAULT_DATA_DIR;
+  }
+}
+
 const DB_PATH = path.join(DATA_DIR, "elseid.db");
 
 let _db: Database | null = null;
@@ -17,13 +28,12 @@ export function getDb(): Database {
 }
 
 export async function initDb(): Promise<void> {
-  // Ensure data directory exists with correct permissions
+  // Ensure data directory exists with correct permissions (always chmod to be sure)
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });
-    } else {
-      fs.chmodSync(DATA_DIR, 0o700);
     }
+    fs.chmodSync(DATA_DIR, 0o700);
   } catch (err) {
     console.warn(`⚠️ Failed to set permissions on data directory ${DATA_DIR}:`, err);
   }
@@ -126,28 +136,61 @@ export async function initDb(): Promise<void> {
 
   await _db.run(`UPDATE identities SET is_creating = 0`);
 
-  // Migration for adding host_name column
-  try {
-    const tableInfo = await _db.all(`PRAGMA table_info(identities)`);
-    if (!tableInfo.some(col => col.name === 'host_name')) {
-      await _db.exec(`ALTER TABLE identities ADD COLUMN host_name TEXT`);
-    }
-    if (!tableInfo.some(col => col.name === 'creating_at')) {
-      await _db.exec(`ALTER TABLE identities ADD COLUMN creating_at INTEGER`);
-    }
+  // Versioned Migrations
+  await runMigrations(_db);
+}
 
-    const feedingsInfo = await _db.all(`PRAGMA table_info(feedings)`);
-    if (!feedingsInfo.some(col => col.name === 'drifter_name')) {
-      await _db.exec(`ALTER TABLE feedings ADD COLUMN drifter_name TEXT`);
-      await _db.exec(`ALTER TABLE feedings ADD COLUMN feeder_name TEXT`);
-    }
+async function runMigrations(db: Database) {
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS _migrations (
+      version INTEGER PRIMARY KEY
+    )
+  `);
 
-    const hostingLogInfo = await _db.all(`PRAGMA table_info(hosting_log)`);
-    if (!hostingLogInfo.some(col => col.name === 'feeder_name')) {
-      await _db.exec(`ALTER TABLE hosting_log ADD COLUMN feeder_name TEXT`);
+  const row = await db.get("SELECT version FROM _migrations") as { version: number } | undefined;
+  const currentVersion = row?.version ?? 0;
+
+  const migrations = [
+    // Version 1: Initial schema (handled by CREATE TABLE IF NOT EXISTS)
+    async () => {},
+    // Version 2: Add host_name and creating_at to identities
+    async (db: Database) => {
+      const info = await db.all(`PRAGMA table_info(identities)`);
+      if (!info.some(c => c.name === "host_name")) {
+        await db.exec(`ALTER TABLE identities ADD COLUMN host_name TEXT`);
+      }
+      if (!info.some(c => c.name === "creating_at")) {
+        await db.exec(`ALTER TABLE identities ADD COLUMN creating_at INTEGER`);
+      }
+    },
+    // Version 3: Add drifter_name, feeder_name to feedings
+    async (db: Database) => {
+      const info = await db.all(`PRAGMA table_info(feedings)`);
+      if (!info.some(c => c.name === "drifter_name")) {
+        await db.exec(`ALTER TABLE feedings ADD COLUMN drifter_name TEXT`);
+      }
+      if (!info.some(c => c.name === "feeder_name")) {
+        await db.exec(`ALTER TABLE feedings ADD COLUMN feeder_name TEXT`);
+      }
+    },
+    // Version 4: Add feeder_name to hosting_log
+    async (db: Database) => {
+      const info = await db.all(`PRAGMA table_info(hosting_log)`);
+      if (!info.some(c => c.name === "feeder_name")) {
+        await db.exec(`ALTER TABLE hosting_log ADD COLUMN feeder_name TEXT`);
+      }
     }
-  } catch (err) {
-    console.warn("⚠️ Database initialization/migration notice:", err);
+  ];
+
+  for (let i = currentVersion; i < migrations.length; i++) {
+    const nextVersion = i + 1;
+    try {
+      await migrations[i](db);
+      await db.run("INSERT OR REPLACE INTO _migrations (version) VALUES (?)", [nextVersion]);
+    } catch (err) {
+      console.error(`❌ Migration to version ${nextVersion} failed:`, err);
+      throw err; // Stop initialization if migration fails
+    }
   }
 }
 

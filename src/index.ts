@@ -2,6 +2,9 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { registerCreateDrifter } from "./tools/create_drifter.js";
 import { registerFindNearbyDrifter } from "./tools/find_nearby_drifter.js";
@@ -22,20 +25,21 @@ import { redactSecrets } from "./utils/redact.js";
 async function main() {
   await initDb();
 
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const pkgPath = path.join(__dirname, "..", "package.json");
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+
   // Immediate Relay Refresh (Auto-Activation Optimization)
-  // We trigger this immediately and don't block the main server startup.
-  // This ensures that by the time the user sends their first prompt, 
-  // the relay stats are already fresh.
   checkAllRelays().then((results) => {
     const online = results.filter(r => r.online).length;
-    console.error(`[ElseID] Relay health check complete: ${online}/${results.length} stations online.`);
+    console.log(`[ElseID] Relay health check complete: ${online}/${results.length} stations online.`);
   }).catch(() => {
-    console.error("[ElseID] Background relay check encountered an issue.");
+    console.warn("[ElseID] Background relay check encountered an issue.");
   });
 
   const server = new McpServer({
     name: "elseid-mcp",
-    version: "0.2.1", // Bumped version for the new architecture
+    version: pkg.version,
   });
 
   registerCreateDrifter(server);
@@ -53,10 +57,10 @@ async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  console.error("[ElseID] Drifter MCP server activated and ready ✓");
+  console.log("[ElseID] Drifter MCP server activated and ready ✓");
 
   const shutdown = async () => {
-    console.error("[ElseID] Shutting down…");
+    console.log("[ElseID] Shutting down…");
     closeAll();
     await closeDb();
     process.exit(0);

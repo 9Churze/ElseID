@@ -4,6 +4,7 @@
 
 import WebSocket from "ws";
 import { WS_TIMEOUT_MS } from "../../config/relays.js";
+import { redactSecrets } from "../utils/redact.js";
 import type { NostrEvent } from "../../types/index.js";
 
 const MAX_RETRIES = 3;
@@ -83,7 +84,7 @@ function sendOnce(event: NostrEvent, relayUrl: string): Promise<BroadcastResult>
 
         // ["NOTICE", <message>] — informational, not final
         if (type === "NOTICE") {
-          console.warn(`[broadcaster] NOTICE from ${relayUrl}:`, rest[0]);
+          console.warn(`[broadcaster] NOTICE from ${relayUrl}:`, redactSecrets(rest[0]));
         }
       } catch (err) {
         console.warn(`[broadcaster] Failed to parse message from ${relayUrl}:`, err);

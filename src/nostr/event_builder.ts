@@ -7,12 +7,12 @@ import type { UnsignedEvent, Drifter, Feeding, FuzzyLocation, PersonalityAnalysi
 // Drifter Builder
 
 export interface DrifterBuildOptions {
-  pubkey:      string;
-  name:        string;
+  pubkey: string;
+  name: string;
   personality: string;
-  analysis:    PersonalityAnalysis;
-  location:    FuzzyLocation;
-  content:     string; // The departure sentence
+  analysis: PersonalityAnalysis;
+  location: FuzzyLocation;
+  content: string; // The departure sentence
 }
 
 export function buildDrifterEvent(opts: DrifterBuildOptions): UnsignedEvent {
@@ -21,10 +21,10 @@ export function buildDrifterEvent(opts: DrifterBuildOptions): UnsignedEvent {
   const now = Math.floor(Date.now() / 1000);
 
   const tags: string[][] = [
-    ["type",        "drifter"],
-    ["name",        name],
+    ["type", "drifter"],
+    ["name", name],
     ["personality", personality],
-    ["trait",       analysis.trait],
+    ["trait", analysis.trait],
   ];
 
   for (const t of analysis.tags) {
@@ -32,12 +32,12 @@ export function buildDrifterEvent(opts: DrifterBuildOptions): UnsignedEvent {
   }
 
   if (location.country) tags.push(["country", location.country]);
-  if (location.city)    tags.push(["city",    location.city]);
+  if (location.city) tags.push(["city", location.city]);
 
   return {
     pubkey,
     created_at: now,
-    kind:       DRIFTER_KIND,
+    kind: DRIFTER_KIND,
     tags,
     content,
   };
@@ -46,43 +46,43 @@ export function buildDrifterEvent(opts: DrifterBuildOptions): UnsignedEvent {
 // Feeding Builder
 
 export interface FeedingBuildOptions {
-  pubkey:          string;
-  drifterEventId:  string;
-  feedType:        string;
-  content:         string;
-  location:        FuzzyLocation;
-  hostName?:       string | null;
+  pubkey: string;
+  drifterEventId: string;
+  feedType: string;
+  content: string;
+  location: FuzzyLocation;
+  hostName?: string | null;
 }
 
 export function buildFeedingEvent(opts: FeedingBuildOptions): UnsignedEvent {
   const { pubkey, drifterEventId, feedType, content, location, hostName } = opts;
 
   const tags: string[][] = [
-    ["type",      "feeding"],
-    ["e",         drifterEventId],
+    ["type", "feeding"],
+    ["e", drifterEventId],
     ["feed_type", feedType],
   ];
 
   if (hostName) tags.push(["host_name", hostName]);
   if (location.country) tags.push(["country", location.country]);
-  if (location.city)    tags.push(["city",    location.city]);
+  if (location.city) tags.push(["city", location.city]);
 
   return {
     pubkey,
     created_at: Math.floor(Date.now() / 1000),
-    kind:       DRIFTER_KIND,
+    kind: DRIFTER_KIND,
     tags,
     content,
   };
 }
 
-export function buildDeletionEvent(pubkey: string, eventIds: string[], reason = ""): any {
+export function buildDeletionEvent(pubkey: string, eventIds: string[], reason = ""): UnsignedEvent {
   return {
     pubkey,
     created_at: Math.floor(Date.now() / 1000),
-    kind:       5,
-    tags:       eventIds.map(id => ["e", id]),
-    content:    reason,
+    kind: 5,
+    tags: eventIds.map(id => ["e", id]),
+    content: reason,
   };
 }
 

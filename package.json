@@ -35,7 +35,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/clipboardy": "^1.1.0",
+    "@types/clipboardy": "^2.0.4",
     "@types/node": "25.7.0",
     "@types/ws": "^8.5.10",
     "tsx": "^4.7.2",

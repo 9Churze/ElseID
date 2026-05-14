@@ -41,6 +41,6 @@ describe("text hardening", () => {
   test("redacts hex private keys from logs", () => {
     const key = "a".repeat(64);
 
-    expect(redactSecrets(new Error(`failed with ${key}`))).not.toContain(key);
+    expect(redactSecrets(new Error(`failed with privkey: ${key}`))).not.toContain(key);
   });
 });

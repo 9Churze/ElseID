@@ -31,5 +31,5 @@ jobs:
       - name: TypeScript build
         run: npm run build
 
-      - name: Tests
-        run: npm test -- --run
+      - name: Tests with coverage
+        run: npm test -- --run --coverage

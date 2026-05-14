@@ -27,6 +27,20 @@ const DIM = chalk.gray;
 const ITALIC = chalk.italic;
 const SEPARATOR = DIM('—'.repeat(60));
 
+function isClientSynced(client: string, configPath: string): boolean {
+  if (!fs.existsSync(configPath)) return false;
+  try {
+    const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+    if (client === 'claude') {
+      return !!(config.mcpServers && config.mcpServers[mcpConfigName]);
+    } else {
+      return !!(config.mcp && config.mcp[mcpConfigName]);
+    }
+  } catch {
+    return false;
+  }
+}
+
 const OPENCODE_COMMANDS = [
   {
     id: "elseid-home",
@@ -121,7 +135,20 @@ async function main() {
     { name: '9. Continue', value: 'continue' },
     { name: '10. Roo Code', value: 'roocode' },
     { name: '11. Other (Manual Setup)', value: 'other' }
-  ];
+  ].filter(choice => {
+    const pathKey = choice.value as keyof typeof CONFIG_PATHS;
+    const configPath = CONFIG_PATHS[pathKey];
+    if (configPath && isClientSynced(choice.value, configPath)) {
+      return false;
+    }
+    return true;
+  });
+
+  if (clientChoices.length === 0) {
+    console.log(`  ${SOCIAL_GREEN("✨ All supported AI clients are already synchronized with your digital soul.")}\n`);
+    console.log(`  ${DIM("Use 'npm run cli' again if you install new AI clients in the future.")}\n`);
+    process.exit(0);
+  }
 
   const selectedClients = await checkbox({
     message: `${promptPrefix} ${chalk.white('Select AI clients to sync with your digital avatar:')}\n`,

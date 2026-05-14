@@ -2,7 +2,7 @@
 // WebSocket connection pool. Manages relay connections and
 // handles REQ/EOSE/EVENT/CLOSE Nostr protocol messages.
 
-import { WebSocket } from "ws";
+import WebSocket from "ws";
 import { WS_TIMEOUT_MS, FETCH_LIMIT } from "../../config/relays.js";
 import { newSubId } from "./filter.js";
 import { verifySignature } from "./event_signer.js";
@@ -17,11 +17,11 @@ const _connecting = new Map<string, Promise<WebSocket>>();
 function getOrOpen(relayUrl: string): Promise<WebSocket> {
   const existing = _connections.get(relayUrl);
   if (existing) {
-    if (existing.readyState === WebSocket.OPEN) {
+    if (existing.readyState === 1) { // 1: WebSocket.OPEN
       return Promise.resolve(existing);
     }
-    // If it's closing or already closed, remove it and re-open
-    if (existing.readyState === WebSocket.CLOSING || existing.readyState === WebSocket.CLOSED) {
+    // 2: CLOSING, 3: CLOSED - remove and re-open
+    if (existing.readyState === 2 || existing.readyState === 3) {
       _connections.delete(relayUrl);
     }
   }

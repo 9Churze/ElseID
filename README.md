@@ -17,7 +17,7 @@ No account needed. No server. Your data lives only on your own machine.
 
 ### Step 1 — Install
 
-Make sure you have [Node.js](https://nodejs.org/) v18 or later, then run:
+Make sure you have [Node.js](https://nodejs.org/) v20.12 or later, then run:
 
 ```bash
 npm run setup

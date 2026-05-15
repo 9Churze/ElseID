@@ -7,26 +7,16 @@ import chalk from "chalk";
 import { fileURLToPath } from 'url';
 import { spawn } from "child_process";
 
-// ──人格分裂逻辑：检测是否为 MCP 服务启动模式 ──────────────────────
-// 如果检测到 --stdio 参数，说明是 AI 客户端在启动服务，我们直接跳转到服务端逻辑
+// ── MCP Mode Detection ──────────────────────────────────────────
 if (process.argv.includes("--stdio")) {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
   const serverPath = path.resolve(__dirname, "..", "src", "index.js");
-  
-  // 启动真正的 MCP 服务进程
-  const child = spawn("node", [serverPath, ...process.argv.slice(2)], {
-    stdio: "inherit"
-  });
-  
+  const child = spawn("node", [serverPath, ...process.argv.slice(2)], { stdio: "inherit" });
   child.on("exit", (code) => process.exit(code ?? 0));
-  // 停止执行后续的 CLI 界面代码
 } else {
-  // 继续执行原有的 CLI 安装界面逻辑
   runCLI();
 }
-
-// ── Environment Detection ──────────────────────────────────────
 
 async function runCLI() {
   const __filename = fileURLToPath(import.meta.url);
@@ -54,7 +44,6 @@ async function runCLI() {
 
   const { command: cmd, args } = getExecutionDetails();
 
-  // ── Injection Logic ───────────────────────────────────────────
   async function injectConfig(client: string, configPath: string) {
     const dir = path.dirname(configPath);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -70,34 +59,47 @@ async function runCLI() {
 
     let config: any = {};
     if (fs.existsSync(configPath)) {
-      try { config = JSON.parse(fs.readFileSync(configPath, "utf8")); } catch { config = {}; }
+      try {
+        const raw = fs.readFileSync(configPath, "utf8");
+        config = JSON.parse(raw);
+      } catch (err) {
+        // If file exists but is empty or invalid, initialize with reasonable defaults
+        config = { version: "1.0.0", config: {}, providers: [], mcp: {}, commands: [] };
+      }
+    } else {
+      // Create new with defaults
+      config = { version: "1.0.0", config: {}, providers: [], mcp: {}, commands: [] };
     }
 
+    // Merge MCP Config
+    if (!config.mcp) config.mcp = {};
     if (client === 'claude') {
       if (!config.mcpServers) config.mcpServers = {};
       config.mcpServers[mcpConfigName] = { command: cmd, args: args };
     } else {
-      if (!config.mcp) config.mcp = {};
       config.mcp[mcpConfigName] = { 
         type: "local", 
         command: isRemoteRun ? ["npx", "-y", "elseid-mcp", "--stdio"] : [cmd, ...args], 
         enabled: true 
       };
+      
       if (client === 'opencode') {
-        const OPENCODE_COMMANDS = [
+        const NEW_CMDS = [
           { id: "elseid-home", name: "ElseID: Summon Butler", description: "Call your digital butler", prompt: "Hello Butler, manage my ElseID drifter." },
           { id: "elseid-status", name: "ElseID: Status", description: "Check your avatar status", prompt: "Run elseid_get_journey_log." }
         ];
         if (!config.commands) config.commands = [];
+        // Only remove our own previous commands
         config.commands = config.commands.filter((c: any) => !c.id.startsWith("elseid-"));
-        config.commands.push(...OPENCODE_COMMANDS);
+        config.commands.push(...NEW_CMDS);
       }
     }
+
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8");
     return true;
   }
 
-  // ── UI Logic ──────────────────────────────────────────────────
+  // ── CLI UI ───────────────────────────────────────────────────
   console.clear();
   const BRAND = chalk.hex('#8B94FF'); 
   const TECH_CYAN = chalk.cyan;            

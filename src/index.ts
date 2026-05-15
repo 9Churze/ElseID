@@ -36,7 +36,7 @@ async function main() {
   // 3. Create MCP server
   const server = new McpServer({
     name:    "elseid-mcp",
-    version: "1.0.2",
+    version: "1.0.3",
   });
 
   // 4. Register all tools

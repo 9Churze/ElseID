@@ -63,12 +63,12 @@ async function runCLI() {
         const raw = fs.readFileSync(configPath, "utf8");
         config = JSON.parse(raw);
       } catch (err) {
-        // If file exists but is empty or invalid, initialize with reasonable defaults
-        config = { version: "1.0.0", config: {}, providers: [], mcp: {}, commands: [] };
+        // Recovery logic for empty or malformed files
+        config = { version: "1.0.0", config: { theme: "system" }, providers: [], app: { agents: [] }, mcp: {}, commands: [] };
       }
     } else {
-      // Create new with defaults
-      config = { version: "1.0.0", config: {}, providers: [], mcp: {}, commands: [] };
+      // Create new with mandatory OpenCode skeleton
+      config = { version: "1.0.0", config: { theme: "system" }, providers: [], app: { agents: [] }, mcp: {}, commands: [] };
     }
 
     // Merge MCP Config

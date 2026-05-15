@@ -47,11 +47,6 @@ interface ClientDef {
    */
   detectPaths?: () => string[];
   format: ConfigFormat;
-  /**
-   * Extra fields merged into the root JSON config after the MCP entry is written.
-   * E.g. OpenCode command palette entries.
-   */
-  extraMerge?: (config: any) => Record<string, any>;
   /** Show client in results but skip writing; print manualUrl instead. */
   unsupported?: true;
   manualUrl?: string;
@@ -161,31 +156,8 @@ function buildRegistry(cmd: string, args: string[]): ClientDef[] {
       label: "OpenCode",
       configPath: () => path.join(H, ".config/opencode/opencode.json"),
       detectPaths: () => [path.join(H, ".config/opencode")],
-      format: "json-mcp",
+      format: "json-mcp-local",
       verifiedAt: "2025-05",
-      extraMerge: (config) => {
-        const ELSEID_CMDS = [
-          {
-            id: "elseid-home",
-            name: "ElseID: Summon Butler",
-            description: "Call your digital butler",
-            prompt: "Hello Butler, manage my ElseID drifter.",
-          },
-          {
-            id: "elseid-status",
-            name: "ElseID: Status",
-            description: "Check your avatar status",
-            prompt: "Run elseid_get_journey_log.",
-          },
-        ];
-        const existing: any[] = Array.isArray(config.commands) ? config.commands : [];
-        return {
-          commands: [
-            ...existing.filter((c: any) => !String(c.id).startsWith("elseid-")),
-            ...ELSEID_CMDS,
-          ],
-        };
-      },
     },
     {
       id: "codex",
@@ -195,12 +167,14 @@ function buildRegistry(cmd: string, args: string[]): ClientDef[] {
       format: "toml-mcp",
       verifiedAt: "2025-05",
     },
-
-    // ── Unsupported / coming soon ───────────────────────────────
     {
       id: "antigravity",
       label: "Antigravity",
       configPath: () => "",
+      detectPaths: () => [
+        "/Applications/Antigravity.app",
+        path.join(H, "Library/Application Support/Antigravity"),
+      ],
       format: "json-mcpServers",
       unsupported: true,
       manualUrl: "https://docs.elseid.xyz/clients/antigravity",
@@ -209,6 +183,10 @@ function buildRegistry(cmd: string, args: string[]): ClientDef[] {
       id: "codebuddy",
       label: "CodeBuddy CN",
       configPath: () => "",
+      detectPaths: () => [
+        "/Applications/CodeBuddy CN.app",
+        path.join(H, "Library/Application Support/CodeBuddy CN"),
+      ],
       format: "json-mcpServers",
       unsupported: true,
       manualUrl: "https://docs.elseid.xyz/clients/codebuddy",
@@ -217,6 +195,10 @@ function buildRegistry(cmd: string, args: string[]): ClientDef[] {
       id: "workbuddy",
       label: "WorkBuddy",
       configPath: () => "",
+      detectPaths: () => [
+        "/Applications/WorkBuddy.app",
+        path.join(H, "Library/Application Support/WorkBuddy"),
+      ],
       format: "json-mcpServers",
       unsupported: true,
       manualUrl: "https://docs.elseid.xyz/clients/workbuddy",
@@ -358,10 +340,6 @@ async function injectConfig(
     client.format === "json-mcp" || client.format === "json-mcp-local"
       ? mergeJsonMcp(config, mcpEntry)
       : mergeJsonMcpServers(config, mcpEntry);
-
-  if (client.extraMerge) {
-    updated = { ...updated, ...client.extraMerge(config) };
-  }
 
   try {
     writeJsonAtomic(configPath, updated);

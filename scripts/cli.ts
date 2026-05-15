@@ -7,6 +7,11 @@ import chalk from "chalk";
 import { fileURLToPath } from "url";
 import { spawn } from "child_process";
 
+const DIM = chalk.gray;
+const GREEN = chalk.greenBright;
+const RED = chalk.red;
+const CYAN = chalk.cyan;
+
 // ── MCP Mode Detection ──────────────────────────────────────────
 if (process.argv.includes("--stdio")) {
   const __filename = fileURLToPath(import.meta.url);
@@ -368,11 +373,6 @@ async function injectConfig(
 }
 
 // ── CLI UI ───────────────────────────────────────────────────────
-
-const DIM = chalk.gray;
-const GREEN = chalk.greenBright;
-const RED = chalk.red;
-const CYAN = chalk.cyan;
 
 function friendlyError(errorType: string | undefined, backupPath?: string): string {
   const bak = backupPath

@@ -39,7 +39,7 @@ async function main() {
 
   const server = new McpServer({
     name: "elseid-mcp",
-    version: pkg.version,
+    version: "1.0.0",
   });
 
   registerCreateDrifter(server);

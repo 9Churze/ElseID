@@ -1,22 +1,28 @@
 {
   "name": "elseid-mcp",
-  "version": "0.2.1",
+  "version": "1.0.0",
   "description": "Zero-config decentralized AI drifter system over Nostr",
   "type": "module",
   "author": "ElseID Contributors",
   "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
-    "url": "https://github.com/9Churze/ElseID.git"
+    "url": "git+https://github.com/9Churze/ElseID.git"
   },
   "main": "dist/src/index.js",
   "bin": {
-    "create-elseid": "dist/scripts/cli.js"
+    "elseid-mcp": "dist/scripts/cli.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "docs/system_prompt.md"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
-    "setup": "tsx scripts/setup.ts",
+    "setup": "tsx scripts/cli.ts",
     "cli": "tsx scripts/cli.ts",
     "start": "node dist/src/index.js",
     "test": "vitest"

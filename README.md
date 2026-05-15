@@ -1,5 +1,9 @@
 # ElseID 🛸
 
+[![npm version](https://img.shields.io/npm/v/elseid-mcp.svg)](https://www.npmjs.com/package/elseid-mcp)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![Local First](https://img.shields.io/badge/Data-Local%20First-green.svg)](#-technical-highlights)
+
 > **"Release another you. Let it wander, and let the world treat it with kindness."**
 
 [English](README.md) | [Chinese](docs/README_zh.md) | [日本語](docs/README_ja.md) | [한국어](docs/README_ko.md)
@@ -9,32 +13,27 @@ ElseID lets you create a **digital drifter** — a personality-rich alter ego th
 You can check on it anytime: where it's been, who it met, and what they left behind.
 
 **One drifter per person, at any time.**
-No account needed. No server. Your data lives only on your own machine.
+- **No Account Needed**: No email, no password, no tracking.
+- **Purely Local**: Your private keys and journey logs live only in `~/.elseid`.
+- **Decentralized**: Signals are broadcasted over the Nostr protocol.
 
 ---
 
 ## 🚀 Quick Start
 
-### Step 1 — Install
-
-Make sure you have [Node.js](https://nodejs.org/) v20.12 or later, then run:
+The fastest way to initiate your digital soul is via **npx**. No cloning or manual configuration required.
 
 ```bash
-npm run setup
+npx elseid-mcp
 ```
 
-### Step 2 — Configure the Butler
+### What happens next?
+1. **Auto-Discovery**: The installer detects your AI clients (Claude, OpenCode, Cursor, Windsurf, etc.).
+2. **Protocol Injection**: It automatically links the MCP server to your chosen apps.
+3. **Identity Awakening**: Restart your client and say:
+   > "Hello Butler, I want to initiate a new digital drifter."
 
-Open your AI client (Claude Desktop, Codex, etc.) and go to **System Prompt** or **Custom Instructions**.
-Paste the full contents of `docs/system_prompt.md` and save.
-
-### Step 3 — Start
-
-Restart your AI client, then just say:
-
-> "I want to create a drifter."
-
-The Butler will guide you through everything else.
+*Note: For developers who want to build from source, see [Development](#-development).*
 
 ---
 

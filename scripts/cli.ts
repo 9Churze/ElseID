@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import fs from "fs";
 import path from "path";
 import os from "os";
@@ -5,73 +6,71 @@ import { checkbox, select } from "@inquirer/prompts";
 import chalk from "chalk";
 import { fileURLToPath } from 'url';
 
+// ── Environment Detection ──────────────────────────────────────
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const isRemoteRun = __dirname.includes('node_modules') || __dirname.includes('_npx');
 const projectRoot = path.resolve(__dirname, '..');
 
 const CONFIG_PATHS = {
-  claude: process.platform === "darwin"
+  claude: process.platform === "darwin" 
     ? path.join(os.homedir(), "Library/Application Support/Claude/claude_desktop_config.json")
     : path.join(os.homedir(), "AppData/Roaming/Claude/claude_desktop_config.json"),
   opencode: path.join(os.homedir(), ".config/opencode/opencode.json"),
+  codex: path.join(os.homedir(), ".codex/config.toml"),
 };
 
-const mcpConfigName = "elseid";
-const cmd = "node";
-const args = [path.join(projectRoot, "dist/src/index.js"), "--stdio"];
+const mcpConfigName = "elseid-mcp";
 
-const BRAND = chalk.hex('#8B94FF');
-const SOCIAL_GREEN = chalk.greenBright;
-const TECH_CYAN = chalk.cyan;
-const DIM = chalk.gray;
-const ITALIC = chalk.italic;
-const SEPARATOR = DIM('—'.repeat(60));
-
-function isClientSynced(client: string, configPath: string): boolean {
-  if (!fs.existsSync(configPath)) return false;
-  try {
-    const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-    if (client === 'claude') {
-      return !!(config.mcpServers && config.mcpServers[mcpConfigName]);
-    } else {
-      return !!(config.mcp && config.mcp[mcpConfigName]);
-    }
-  } catch {
-    return false;
+function getExecutionDetails() {
+  if (isRemoteRun) {
+    return {
+      command: "npx",
+      args: ["-y", "elseid-mcp", "--stdio"]
+    };
+  } else {
+    return {
+      command: "node",
+      args: [path.join(projectRoot, "dist/src/index.js"), "--stdio"]
+    };
   }
 }
 
-const OPENCODE_COMMANDS = [
-  {
-    id: "elseid-home",
-    name: "ElseID: Summon Butler",
-    description: "Call your digital butler to start an identity management session.",
-    prompt: "Hello Butler, I'd like to discuss the management of my ElseID digital avatar."
-  },
-  {
-    id: "elseid-status",
-    name: "ElseID: Status Query",
-    description: "Quickly check the current wandering location and status of your avatar.",
-    prompt: "Run elseid_get_journey_log and tell me the current status of my avatar."
-  },
-  {
-    id: "elseid-nearby",
-    name: "ElseID: Encounter Search",
-    description: "Search for other drifter signals passing nearby.",
-    prompt: "Run elseid_find_nearby_drifter to see if there are any interesting souls nearby."
-  },
-  {
-    id: "elseid-log",
-    name: "ElseID: Journey Archive",
-    description: "View full wandering trajectory and feeding history logs.",
-    prompt: "I want to view the complete journey trajectory and feeding history archive of my avatar."
-  }
-];
+const { command: cmd, args } = getExecutionDetails();
+
+// ── Injection Logic ───────────────────────────────────────────
 
 async function injectConfig(client: string, configPath: string) {
   const dir = path.dirname(configPath);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
+  // --- Special Handling for Codex (TOML) ---
+  if (client === 'codex') {
+    let content = "";
+    if (fs.existsSync(configPath)) {
+      content = fs.readFileSync(configPath, "utf8");
+    }
+
+    const mcpBlock = `
+[mcp_servers."${mcpConfigName}"]
+command = "${cmd}"
+args = [${args.map(a => `"${a}"`).join(", ")}]
+`;
+
+    // Remove existing elseid-mcp block if it exists
+    const regex = new RegExp(`\\[mcp_servers\\."${mcpConfigName}"\\][\\s\\S]*?(?=\\n\\[|$)`, 'g');
+    if (regex.test(content)) {
+      content = content.replace(regex, mcpBlock.trim());
+    } else {
+      content += `\n${mcpBlock}`;
+    }
+
+    fs.writeFileSync(configPath, content.trim() + "\n", "utf8");
+    return true;
+  }
+
+  // --- Standard Handling for JSON Clients ---
   let config: any = {};
   if (fs.existsSync(configPath)) {
     try {
@@ -82,10 +81,18 @@ async function injectConfig(client: string, configPath: string) {
   if (client === 'claude') {
     if (!config.mcpServers) config.mcpServers = {};
     config.mcpServers[mcpConfigName] = { command: cmd, args: args };
-  } else if (client === 'opencode' || client === 'cursor' || client === 'windsurf') {
+  } else {
     if (!config.mcp) config.mcp = {};
-    config.mcp[mcpConfigName] = { type: "local", command: [cmd, ...args], enabled: true };
+    config.mcp[mcpConfigName] = { 
+      type: "local", 
+      command: isRemoteRun ? ["npx", "-y", "elseid-mcp", "--stdio"] : [cmd, ...args], 
+      enabled: true 
+    };
     if (client === 'opencode') {
+      const OPENCODE_COMMANDS = [
+        { id: "elseid-home", name: "ElseID: Summon Butler", description: "Call your digital butler", prompt: "Hello Butler, manage my ElseID drifter." },
+        { id: "elseid-status", name: "ElseID: Status", description: "Check your avatar status", prompt: "Run elseid_get_journey_log." }
+      ];
       if (!config.commands) config.commands = [];
       config.commands = config.commands.filter((c: any) => !c.id.startsWith("elseid-"));
       config.commands.push(...OPENCODE_COMMANDS);
@@ -96,13 +103,18 @@ async function injectConfig(client: string, configPath: string) {
   return true;
 }
 
+// ── UI Styles ────────────────────────────────────────────────
+
+const BRAND = chalk.hex('#8B94FF'); 
+const SOCIAL_GREEN = chalk.greenBright;   
+const TECH_CYAN = chalk.cyan;            
+const DIM = chalk.gray;
+const ITALIC = chalk.italic;
+const SEPARATOR = DIM('—'.repeat(60));
+
 async function main() {
   console.clear();
-
-  // ── Welcome & Branding ──────────────────────────────────────────
-  console.log(`  ${DIM('Welcome to ELSEID - An AI-driven Decentralized Habitat.')}`);
-
-  const logoHeader = `
+  console.log(`
   ${BRAND.bold(`██████  ██       ██████  ███████ ██ ██████  `)}
   ${BRAND.bold(`██      ██      ██       ██      ██ ██   ██ `)}
   ${BRAND.bold(`█████   ██       ██████  █████   ██ ██   ██ `)}
@@ -110,74 +122,48 @@ async function main() {
   ${BRAND.bold(`███████ ███████  ██████  ███████ ██ ██████  `)}
   
   ${BRAND('Exile your digital soul')} ${DIM('｜')} ${DIM('0x7E 0x1D')}
-  `;
-
-  console.log(logoHeader);
+  `);
   console.log(`  ${SEPARATOR}`);
-  console.log(`  ${ITALIC('"Anchored in reality, drifting into the unknown."')}`);
-  console.log(`
-  Here, you will possess a ${BRAND('self-evolving digital avatar')}.
-  Your shadow in the cyber-wasteland, traversing encrypted nodes 
-  on your behalf, embarking on an ${TECH_CYAN('endless journey of discovery')}.`);
-  console.log(`  ${SEPARATOR}\n`);
+  console.log(`  ${ITALIC('"Anchored in reality, drifting into the unknown."')}\n`);
 
   const promptPrefix = `${TECH_CYAN('λ')} ${chalk.bold('ELSEID')} ${DIM('»')}`;
 
   const clientChoices = [
     { name: '1. Claude Desktop', value: 'claude', checked: true },
-    { name: '2. OpenCode', value: 'opencode' },
-    { name: '3. Cursor', value: 'cursor' },
-    { name: '4. Windsurf', value: 'windsurf' },
-    { name: '5. Trae (ByteDance)', value: 'trae' },
-    { name: '6. Codex', value: 'codex' },
-    { name: '7. Antigravity', value: 'antigravity' },
-    { name: '8. Gemini', value: 'gemini' },
-    { name: '9. Continue', value: 'continue' },
-    { name: '10. Roo Code', value: 'roocode' },
-    { name: '11. Other (Manual Setup)', value: 'other' }
-  ].filter(choice => {
-    const pathKey = choice.value as keyof typeof CONFIG_PATHS;
-    const configPath = CONFIG_PATHS[pathKey];
-    if (configPath && isClientSynced(choice.value, configPath)) {
-      return false;
-    }
-    return true;
-  });
-
-  if (clientChoices.length === 0) {
-    console.log(`  ${SOCIAL_GREEN("✨ All supported AI clients are already synchronized with your digital soul.")}\n`);
-    console.log(`  ${DIM("Use 'npm run cli' again if you install new AI clients in the future.")}\n`);
-    process.exit(0);
-  }
+    { name: '2. OpenCode', value: 'opencode', checked: true },
+    { name: '3. Codex (TOML Sync)', value: 'codex' },
+    { name: '4. Cursor', value: 'cursor' },
+    { name: '5. Windsurf', value: 'windsurf' },
+    { name: '6. Other (Manual)', value: 'other' }
+  ];
 
   const selectedClients = await checkbox({
-    message: `${promptPrefix} ${chalk.white('Select AI clients to sync with your digital avatar:')}\n`,
+    message: `${promptPrefix} ${chalk.white('Select AI clients to sync:')}\n`,
     choices: clientChoices,
   });
 
   if (selectedClients.length === 0) process.exit(0);
 
-  console.log(`\n  ${DIM('──────────────────────────────────────────')}`);
   const confirm = await select({
-    message: `${promptPrefix} ${chalk.white('Ready to synchronize your soul\'s trajectory?')}`,
+    message: `\n  ${promptPrefix} ${chalk.white('Ready to synchronize your soul\'s trajectory?')}`,
     choices: [{ name: '🚀 Sync Now', value: 'go' }, { name: 'Cancel', value: 'cancel' }]
   });
 
   if (confirm === 'cancel') process.exit(0);
 
-  console.log(chalk.gray("\n  Injecting protocol..."));
+  console.log(chalk.gray(`\n  Injecting protocol (${isRemoteRun ? 'NPM Remote' : 'Local Dev'})...`));
   for (const client of selectedClients) {
     const pathKey = client as keyof typeof CONFIG_PATHS;
     const configPath = CONFIG_PATHS[pathKey];
     if (configPath) {
       await injectConfig(client, configPath);
-      console.log(SOCIAL_GREEN(`  ✓ ${client} protocol activated`));
+      console.log(SOCIAL_GREEN(`  ✓ ${client} protocol activated (${client === 'codex' ? 'TOML' : 'JSON'})`));
     } else {
       console.log(DIM(`  - ${client}: Manual setup required`));
     }
   }
 
-  console.log(`\n  ${SOCIAL_GREEN.bold("SYNC SUCCESS")} Identity ready. Restart your client and call the Butler.\n`);
+  console.log(`\n  ${SOCIAL_GREEN.bold("SYNC SUCCESS")} Restart your client and call the Butler.\n`);
 }
 
 main().catch(() => process.exit(1));

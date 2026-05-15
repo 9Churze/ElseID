@@ -84,10 +84,10 @@ function sendOnce(event: NostrEvent, relayUrl: string): Promise<BroadcastResult>
 
         // ["NOTICE", <message>] — informational, not final
         if (type === "NOTICE") {
-          console.warn(`[broadcaster] NOTICE from ${relayUrl}:`, redactSecrets(rest[0]));
+          console.error(`[broadcaster] NOTICE from ${relayUrl}:`, redactSecrets(rest[0]));
         }
       } catch (err) {
-        console.warn(`[broadcaster] Failed to parse message from ${relayUrl}:`, err);
+        console.error(`[broadcaster] Failed to parse message from ${relayUrl}:`, err);
       }
     });
 

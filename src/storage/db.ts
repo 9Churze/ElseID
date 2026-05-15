@@ -35,7 +35,7 @@ export async function initDb(): Promise<void> {
     }
     fs.chmodSync(DATA_DIR, 0o700);
   } catch (err) {
-    console.warn(`⚠️ Failed to set permissions on data directory ${DATA_DIR}:`, err);
+    console.error(`⚠️ Failed to set permissions on data directory ${DATA_DIR}:`, err);
   }
 
   // Use sqlite3.Database as the driver
@@ -50,7 +50,7 @@ export async function initDb(): Promise<void> {
       fs.chmodSync(DB_PATH, 0o600);
     }
   } catch (err) {
-    console.warn(`⚠️ Failed to set permissions on database file ${DB_PATH}:`, err);
+    console.error(`⚠️ Failed to set permissions on database file ${DB_PATH}:`, err);
   }
 
   await _db.exec("PRAGMA journal_mode = WAL");

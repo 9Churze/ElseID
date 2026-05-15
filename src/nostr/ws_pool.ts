@@ -100,7 +100,7 @@ export async function subscribe(
       ws.removeListener("close", onAbort);
       ws.removeListener("error", onAbort);
       try { ws.send(JSON.stringify(["CLOSE", subId])); } catch (err) {
-        console.warn(`[ws_pool] Failed to send CLOSE for ${subId}:`, err);
+        console.error(`[ws_pool] Failed to send CLOSE for ${subId}:`, err);
       }
     }
 
@@ -114,7 +114,7 @@ export async function subscribe(
       try {
         msg = JSON.parse(raw.toString()) as unknown[];
       } catch (err) { 
-        console.warn("[ws_pool] Failed to parse message:", err);
+        console.error("[ws_pool] Failed to parse message:", err);
         return; 
       }
 
@@ -251,7 +251,7 @@ export async function subscribeRaceFirst(
             ws.removeListener("error", onAbort);
             abortController.signal.removeEventListener("abort", onAbort);
             try { ws.send(JSON.stringify(["CLOSE", subId])); } catch (err) {
-              console.warn(`[ws_pool] Failed to send CLOSE (race) for ${subId}:`, err);
+              console.error(`[ws_pool] Failed to send CLOSE (race) for ${subId}:`, err);
             }
           };
 
@@ -274,7 +274,7 @@ export async function subscribeRaceFirst(
             try {
               msg = JSON.parse(raw.toString()) as unknown[];
             } catch (err) {
-              console.warn("[ws_pool] Failed to parse message (race):", err);
+              console.error("[ws_pool] Failed to parse message (race):", err);
               return;
             }
 

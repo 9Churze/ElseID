@@ -44,9 +44,9 @@
     "@types/clipboardy": "^2.0.4",
     "@types/node": "25.7.0",
     "@types/ws": "^8.5.10",
+    "@vitest/coverage-v8": "^4.1.6",
     "tsx": "^4.7.2",
     "typescript": "6.0.3",
-    "@vitest/coverage-v8": "^4.1.6",
     "vitest": "^4.1.6"
   }
 }

@@ -140,7 +140,7 @@ function getMcpEntry(client: ClientDef, cmd: string, args: string[]) {
     // If it's a remote run (npx), we can use the specific type: "local" structure.
     const isNpx = cmd === "npx";
     if (isNpx) {
-      return { type: "local", command: ["npx", "-y", "elseid-mcp", "--stdio"], enabled: true };
+      return { type: "local", command: ["npx", "-y", "elseid-mcp@latest", "--stdio"], enabled: true };
     }
   }
 
@@ -263,7 +263,7 @@ async function runCLI() {
   const projectRoot = pkgData.__path ? path.dirname(pkgData.__path) : path.resolve(__dirname, "..");
 
   const { cmd, args } = isRemoteRun
-    ? { cmd: "npx", args: ["-y", "elseid-mcp", "--stdio"] }
+    ? { cmd: "npx", args: ["-y", "elseid-mcp@latest", "--stdio"] }
     : { 
         cmd: "node", 
         args: [

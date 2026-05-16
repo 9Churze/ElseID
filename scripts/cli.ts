@@ -21,14 +21,30 @@ const GITHUB_REPO = "9Churze/ElseID";
 
 // Dynamically resolve package version
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const pkgPath = path.resolve(__dirname, "..", "package.json");
-const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+
+function findPackageJson(startDir: string): any {
+  let curr = startDir;
+  while (curr !== path.parse(curr).root) {
+    const pkgPath = path.join(curr, "package.json");
+    if (fs.existsSync(pkgPath)) {
+      return { ...JSON.parse(fs.readFileSync(pkgPath, "utf8")), __path: pkgPath };
+    }
+    curr = path.dirname(curr);
+  }
+  return {};
+}
+
+const pkg = findPackageJson(__dirname);
 const VERSION = pkg.version || "1.0.0";
 
 // ── MCP Mode Detection ──────────────────────────────────────────
 
 if (process.argv.includes("--stdio")) {
-  const serverPath = path.resolve(__dirname, "..", "src", "index.js");
+  const pkgData = findPackageJson(__dirname);
+  const projectRoot = pkgData.__path ? path.dirname(pkgData.__path) : path.resolve(__dirname, "..");
+  const serverPath = fs.existsSync(path.join(projectRoot, "dist/src/index.js"))
+    ? path.join(projectRoot, "dist/src/index.js")
+    : path.join(projectRoot, "src/index.js");
   const child = spawn("node", [serverPath, ...process.argv.slice(2)], { stdio: "inherit" });
   child.on("exit", (code) => process.exit(code ?? 0));
 } else {
@@ -57,14 +73,22 @@ function sanitisePath(p: string): string {
   return p.replace(os.homedir(), "~");
 }
 
+function escapeRegex(str: string): string {
+  return str.replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&");
+}
+
 async function detectClient(client: ClientDef): Promise<boolean> {
   if (client.unsupported) return false;
   try {
     const candidates = client.detectPaths
       ? client.detectPaths()
       : [path.dirname(client.configPath())];
-    for (const p of candidates) {
-      if (p && fs.existsSync(p)) return true;
+    
+    const validPaths = candidates.filter(Boolean);
+    if (validPaths.length === 0) return false;
+
+    for (const p of validPaths) {
+      if (fs.existsSync(p)) return true;
     }
     return false;
   } catch {
@@ -83,10 +107,10 @@ function readJson(filePath: string): any | null {
   }
 }
 
-async function writeJsonAtomic(filePath: string, data: any): Promise<void> {
+async function writeAtomic(filePath: string, content: string): Promise<void> {
   await fsp.mkdir(path.dirname(filePath), { recursive: true });
   const tmp = filePath + ".tmp";
-  await fsp.writeFile(tmp, JSON.stringify(data, null, 2) + "\n", "utf8");
+  await fsp.writeFile(tmp, content, "utf8");
   await fsp.rename(tmp, filePath);
 }
 
@@ -109,24 +133,34 @@ function areEntriesEqual(a: any, b: any): boolean {
 }
 
 function getMcpEntry(client: ClientDef, cmd: string, args: string[]) {
-  if (client.format === "json-mcp-local") {
-    return { type: "local", command: ["npx", "-y", "elseid-mcp", "--stdio"], enabled: true };
-  }
   const entry: any = { command: cmd, args };
-  if (client.requiresStdioType) {
-    // Some clients like Cursor might want more metadata, but standard MCP is command/args
+  
+  if (client.format === "json-mcp-local") {
+    // If it's a local development run, we use the passed cmd/args which point to local files.
+    // If it's a remote run (npx), we can use the specific type: "local" structure.
+    const isNpx = cmd === "npx";
+    if (isNpx) {
+      return { type: "local", command: ["npx", "-y", "elseid-mcp", "--stdio"], enabled: true };
+    }
   }
+
+  if (client.requiresStdioType) {
+    entry.type = "stdio";
+  }
+  
   return entry;
 }
 
 function mergeTomlBlock(existing: string, cmd: string, args: string[]): { content: string; changed: boolean } {
+  const escapedName = escapeRegex(MCP_NAME);
   const block =
     `[mcp_servers."${MCP_NAME}"]\n` +
     `command = "${cmd}"\n` +
     `args = [${args.map((a) => `"${a}"`).join(", ")}]`;
 
+  // Matches the block and any trailing whitespace until the next block or end of file
   const pattern = new RegExp(
-    `\\[mcp_servers\\."${MCP_NAME}"\\][\\s\\S]*?(?=\\n\\[|$)`, "g"
+    `\\[mcp_servers\\."${escapedName}"\\][\\s\\S]*?(?=\\r?\\n\\s*\\[|$)`, "g"
   );
 
   const match = existing.match(pattern);
@@ -162,7 +196,7 @@ async function injectConfig(
       if (!changed) return { ok: true, status: "skipped" };
 
       const backupPath = backupIfExists(configPath) ?? undefined;
-      await fsp.writeFile(configPath, content, "utf8");
+      await writeAtomic(configPath, content);
       return { ok: true, status: "updated", backupPath };
     } catch (err) {
       return { ok: false, status: "error", errorType: "write-error", message: (err as Error).message };
@@ -199,7 +233,7 @@ async function injectConfig(
   };
 
   try {
-    await writeJsonAtomic(configPath, updatedConfig);
+    await writeAtomic(configPath, JSON.stringify(updatedConfig, null, 2) + "\n");
     return { ok: true, status: "updated", backupPath };
   } catch (err) {
     return { ok: false, status: "error", errorType: "write-error", message: (err as Error).message, backupPath };
@@ -225,11 +259,20 @@ function openGitHubIssue(report: any): void {
 
 async function runCLI() {
   const isRemoteRun = __dirname.includes("node_modules") || __dirname.includes("_npx");
-  const projectRoot = path.resolve(__dirname, "..");
+  const pkgData = findPackageJson(__dirname);
+  const projectRoot = pkgData.__path ? path.dirname(pkgData.__path) : path.resolve(__dirname, "..");
 
   const { cmd, args } = isRemoteRun
     ? { cmd: "npx", args: ["-y", "elseid-mcp", "--stdio"] }
-    : { cmd: "node", args: [path.join(projectRoot, "dist/src/index.js"), "--stdio"] };
+    : { 
+        cmd: "node", 
+        args: [
+          fs.existsSync(path.join(projectRoot, "dist/src/index.js"))
+            ? path.join(projectRoot, "dist/src/index.js")
+            : path.join(projectRoot, "src/index.js"), 
+          "--stdio"
+        ] 
+      };
 
   const registry = getRegistry();
 

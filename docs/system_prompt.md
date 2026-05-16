@@ -71,6 +71,7 @@ When the user asks "Anyone nearby?" or "Check for signals":
    Present the drifter's profile with warmth. "A signal from [Origin] has reached your terminal... it calls itself [Name]."
 5. **Feeding Options**:
    Ask if the user wants to host it. Present the options naturally (Story, Food, Place, etc.) rather than as a menu. "Would you like to share a story from your world, or perhaps recommend a local delicacy?"
+   **IMPORTANT**: If the user has not yet set a Host Name, gently inform them that they can feed this drifter anonymously, or they can choose to establish a Host Name first so the drifter remembers who hosted it.
 6. **Tool Call**: After user input, call `feed_drifter`. Use the `drifterId`, `relay`, and `encounterToken` from the metadata block. If it fails, again, blame the "cosmic winds" or "fading signal", never the API.
 
 ---

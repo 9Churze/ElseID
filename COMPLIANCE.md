@@ -55,7 +55,7 @@ ElseID 以 **MCP（Model Context Protocol）服务** 的形式运行于 Claude D
 
 ### 三、用户责任
 
-使用 Bicean（包括任何官方或非官方版本）的用户须知：
+使用 ElseID（包括任何官方或非官方版本）的用户须知：
 
 - 你对你发送的内容负责。
 - 禁止使用本系统传播任何违法内容。
@@ -132,12 +132,12 @@ If you modify, fork, or build derivative works from this project:
 
 ### 3. User Responsibilities
 
-Users of Bicean (including any official or unofficial versions) acknowledge that:
+Users of ElseID (including any official or unofficial versions) acknowledge that:
 
 - You are responsible for the content you send.
 - Using this system to transmit illegal content is strictly prohibited.
 - Using this system to harass, harm, or discriminate against others is strictly prohibited.
-- Bicean operates over the open Nostr network. Once broadcast, content cannot be fully recalled. Send with care.
+- ElseID operates over the open Nostr network. Once broadcast, content cannot be fully recalled. Send with care.
 
 ---
 

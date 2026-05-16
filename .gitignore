@@ -10,11 +10,7 @@ build/
 coverage/
 .elseid_test/
 .elseid_temp/
-.elseid-lab/
 .elseid_lab/
-.bicean_test/
-.bicean_temp/
-.bicean_lab/
 
 # Configuration & Secrets
 .env
@@ -35,8 +31,6 @@ coverage/
 # ElseID Specific
 .elseid/
 .elseid_data/
-.bicean_data/
 
 # Tests (local test artifacts)
 # .elseid_test/
-# .bicean_test/

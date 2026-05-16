@@ -1,4 +1,4 @@
-bicean/
+elseid/
 ├── package.json
 ├── tsconfig.json
 ├── README.md

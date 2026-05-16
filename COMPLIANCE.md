@@ -158,5 +158,5 @@ If you discover a compliance issue in the official version of this project, plea
 
 ---
 
-*Last updated: 2025*
-*License: AGPL-3.0 — See [LICENSE](./LICENSE)*
+_Last updated: 2026_
+_License: AGPL-3.0 — See [LICENSE](./LICENSE)_

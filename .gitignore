@@ -2,6 +2,7 @@
 node_modules/
 dist/
 build/
+.workbuddy/
 
 # Logs & Temp files
 *.log

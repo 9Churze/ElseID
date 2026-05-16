@@ -10,7 +10,7 @@
 
 ---
 
-Somewhere in **The Unnamed** — a nameless, decentralized space woven from open relay nodes — something is drifting.
+Somewhere in **The Unnamed** — a nameless, decentralized space woven from open relay nodes — another you is drifting.
 
 It carries your signature. Your temperament. The shape of your soul.  
 It is not you. But it was made from you.

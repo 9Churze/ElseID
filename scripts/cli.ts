@@ -155,51 +155,62 @@ function buildRegistry(cmd: string, args: string[]): ClientDef[] {
     {
       id: "opencode",
       label: "OpenCode",
-      configPath: () => path.join(H, ".config/opencode/opencode.json"),
-      detectPaths: () => [path.join(H, ".config/opencode")],
+      configPath: () =>
+        isWin ? "" : path.join(H, ".config/opencode/opencode.json"),
+      detectPaths: () =>
+        isWin ? [] : [path.join(H, ".config/opencode")],
       format: "json-mcp-local",
-      verifiedAt: "2026-05",
+      verifiedAt: "2025-05",
     },
     {
       id: "codex",
       label: "Codex",
-      configPath: () => path.join(H, ".codex/config.toml"),
-      detectPaths: () => [path.join(H, ".codex")],
+      configPath: () =>
+        isWin ? "" : path.join(H, ".codex/config.toml"),
+      detectPaths: () =>
+        isWin ? [] : [path.join(H, ".codex")],
       format: "toml-mcp",
-      verifiedAt: "2026-05",
+      verifiedAt: "2025-05",
     },
     {
       id: "antigravity",
       label: "Antigravity",
-      configPath: () => path.join(H, ".gemini/antigravity/mcp_config.json"),
-      detectPaths: () => [
-        "/Applications/Antigravity.app",
-        path.join(H, "Library/Application Support/Antigravity"),
-      ],
+      configPath: () =>
+        isWin ? "" : path.join(H, ".gemini/antigravity/mcp_config.json"),
+      detectPaths: () =>
+        isWin ? [] : [
+          "/Applications/Antigravity.app",
+          path.join(H, "Library/Application Support/Antigravity"),
+        ],
       format: "json-mcpServers",
-      verifiedAt: "2026-05",
+      verifiedAt: "2025-05",
     },
     {
       id: "codebuddy",
       label: "CodeBuddy CN",
-      configPath: () => path.join(H, ".workbuddy/mcp.json"),
-      detectPaths: () => [
-        "/Applications/CodeBuddy CN.app",
-        path.join(H, "Library/Application Support/CodeBuddy CN"),
-      ],
+      configPath: () =>
+        isWin ? "" : path.join(H, ".codebuddy/mcp.json"),
+      detectPaths: () =>
+        isWin ? [] : [
+          "/Applications/CodeBuddy CN.app",
+          path.join(H, "Library/Application Support/CodeBuddy CN"),
+        ],
       format: "json-mcpServers",
-      verifiedAt: "2026-05",
+      requiresStdioType: true,
+      verifiedAt: "2025-05",
     },
     {
       id: "workbuddy",
       label: "WorkBuddy",
-      configPath: () => path.join(H, ".workbuddy/mcp.json"),
-      detectPaths: () => [
-        "/Applications/WorkBuddy.app",
-        path.join(H, "Library/Application Support/WorkBuddy"),
-      ],
+      configPath: () =>
+        isWin ? "" : path.join(H, ".workbuddy/mcp.json"),
+      detectPaths: () =>
+        isWin ? [] : [
+          "/Applications/WorkBuddy.app",
+          path.join(H, "Library/Application Support/WorkBuddy"),
+        ],
       format: "json-mcpServers",
-      verifiedAt: "2026-05",
+      verifiedAt: "2025-05",
     },
   ];
 }

@@ -4,6 +4,9 @@ dist/
 build/
 .workbuddy/
 
+# Scratch & Temp files
+scratch/
+
 # Logs & Temp files
 *.log
 .DS_Store

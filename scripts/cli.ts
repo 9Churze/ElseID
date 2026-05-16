@@ -52,6 +52,7 @@ interface ClientDef {
   manualUrl?: string;
   /** Last time this registry entry was manually verified against the real client. */
   verifiedAt?: string;
+  requiresStdioType?: true;
 }
 
 // ── Error Reporting ─────────────────────────────────────────────
@@ -108,7 +109,6 @@ function buildRegistry(cmd: string, args: string[]): ClientDef[] {
   const isWin = process.platform === "win32";
 
   return [
-    // ── Supported ───────────────────────────────────────────────
     {
       id: "claude",
       label: "Claude Desktop",
@@ -121,7 +121,7 @@ function buildRegistry(cmd: string, args: string[]): ClientDef[] {
           ? ["/Applications/Claude.app", path.join(H, "Library/Application Support/Claude")]
           : [path.join(H, "AppData/Roaming/Claude")],
       format: "json-mcpServers",
-      verifiedAt: "2025-05",
+      verifiedAt: "2026-05",
     },
     {
       id: "cursor",
@@ -135,7 +135,8 @@ function buildRegistry(cmd: string, args: string[]): ClientDef[] {
           isWin ? [path.join(H, "AppData/Roaming/Cursor")]
             : [path.join(H, ".config/Cursor")],
       format: "json-mcpServers",
-      verifiedAt: "2025-05",
+      requiresStdioType: true,
+      verifiedAt: "2026-05",
     },
     {
       id: "windsurf",
@@ -149,7 +150,7 @@ function buildRegistry(cmd: string, args: string[]): ClientDef[] {
           isWin ? [path.join(H, "AppData/Roaming/Windsurf")]
             : [path.join(H, ".codeium/windsurf")],
       format: "json-mcpServers",
-      verifiedAt: "2025-05",
+      verifiedAt: "2026-05",
     },
     {
       id: "opencode",
@@ -157,7 +158,7 @@ function buildRegistry(cmd: string, args: string[]): ClientDef[] {
       configPath: () => path.join(H, ".config/opencode/opencode.json"),
       detectPaths: () => [path.join(H, ".config/opencode")],
       format: "json-mcp-local",
-      verifiedAt: "2025-05",
+      verifiedAt: "2026-05",
     },
     {
       id: "codex",
@@ -165,43 +166,40 @@ function buildRegistry(cmd: string, args: string[]): ClientDef[] {
       configPath: () => path.join(H, ".codex/config.toml"),
       detectPaths: () => [path.join(H, ".codex")],
       format: "toml-mcp",
-      verifiedAt: "2025-05",
+      verifiedAt: "2026-05",
     },
     {
       id: "antigravity",
       label: "Antigravity",
-      configPath: () => "",
+      configPath: () => path.join(H, ".gemini/antigravity/mcp_config.json"),
       detectPaths: () => [
         "/Applications/Antigravity.app",
         path.join(H, "Library/Application Support/Antigravity"),
       ],
       format: "json-mcpServers",
-      unsupported: true,
-      manualUrl: "https://docs.elseid.xyz/clients/antigravity",
+      verifiedAt: "2026-05",
     },
     {
       id: "codebuddy",
       label: "CodeBuddy CN",
-      configPath: () => "",
+      configPath: () => path.join(H, ".workbuddy/mcp.json"),
       detectPaths: () => [
         "/Applications/CodeBuddy CN.app",
         path.join(H, "Library/Application Support/CodeBuddy CN"),
       ],
       format: "json-mcpServers",
-      unsupported: true,
-      manualUrl: "https://docs.elseid.xyz/clients/codebuddy",
+      verifiedAt: "2026-05",
     },
     {
       id: "workbuddy",
       label: "WorkBuddy",
-      configPath: () => "",
+      configPath: () => path.join(H, ".workbuddy/mcp.json"),
       detectPaths: () => [
         "/Applications/WorkBuddy.app",
         path.join(H, "Library/Application Support/WorkBuddy"),
       ],
       format: "json-mcpServers",
-      unsupported: true,
-      manualUrl: "https://docs.elseid.xyz/clients/workbuddy",
+      verifiedAt: "2026-05",
     },
   ];
 }

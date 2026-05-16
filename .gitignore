@@ -1,0 +1,40 @@
+# Dependency directories
+node_modules/
+dist/
+build/
+.workbuddy/
+
+# Scratch & Temp files
+scratch/
+
+# Logs & Temp files
+*.log
+.DS_Store
+*.tgz
+coverage/
+.elseid_test/
+.elseid_temp/
+.elseid_lab/
+
+# Configuration & Secrets
+.env
+.env.local
+
+# Database files (Local storage)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# ElseID Specific
+.elseid/
+.elseid_data/
+
+# Tests (local test artifacts)
+# .elseid_test/

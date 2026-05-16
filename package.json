@@ -1,6 +1,6 @@
 {
   "name": "elseid-mcp",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Zero-config decentralized AI drifter system over Nostr",
   "type": "module",
   "author": "ElseID Contributors",

@@ -17,7 +17,7 @@ import { sanitizeErrorMessage } from "../utils/errors.js";
 const schema = z.object({
   drifter_event_id: z.string().regex(/^[0-9a-f]{64}$/i).describe("The ID of the drifter you are feeding"),
   drifter_name: z.string().max(80).optional().describe("The name of the drifter you are feeding"),
-  encounter_token: z.string().regex(/^[0-9a-f]{32}$/i).describe("Short-lived encounter token returned by find_nearby_drifter"),
+  encounter_token: z.string().regex(/^[0-9a-f]{32}$/i).describe("Short-lived encounter token returned during the encounter"),
   feed_type: z.enum(["story", "food", "place", "other"]).describe("Type of feeding"),
   content: z.string().min(5).max(1000).describe("Your story, recommendation, or message"),
   relay: z.string().url().describe("The relay where the drifter was found"),

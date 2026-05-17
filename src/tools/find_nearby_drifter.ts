@@ -75,10 +75,10 @@ export function registerFindNearbyDrifter(server: McpServer) {
                `💬 Message: "${message}"\n\n` +
                `It is temporarily staying at your terminal. Would you like to leave something for it?\n\n` +
                `You can perform the following feedings:\n` +
-               `- [A] Leave a message (feed_drifter type="story")\n` +
-               `- [B] Share sound or food (feed_drifter type="food")\n` +
-               `- [C] Recommend a place (feed_drifter type="place")\n` +
-               `- [D] Share your life experience (feed_drifter type="other")`,
+               `- [A] Leave a message (story)\n` +
+               `- [B] Share sound or food (food)\n` +
+               `- [C] Recommend a place (place)\n` +
+               `- [D] Share your life experience (other)`,
         },
       ];
 

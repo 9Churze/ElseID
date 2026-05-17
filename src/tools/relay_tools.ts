@@ -48,17 +48,16 @@ export function registerRelayTools(server: McpServer) {
     }
   );
 
-  // pick_relay
   server.tool(
     "pick_relay",
-    "Let the system pick the best available relay for your next create_drifter call.",
+    "Let the system pick the best available relay for launching a drifter.",
     {},
     async () => {
       const url = await pickRelay();
       return {
         content: [{
           type: "text",
-          text: `🎯 Best relay selected: ${url}\n\nYou can pass this as the relay parameter in create_drifter.`,
+          text: `🎯 Best relay selected: ${url}\n\nUse this relay to dispatch your drifter.`,
         }],
       };
     }

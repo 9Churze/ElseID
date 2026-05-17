@@ -12,7 +12,7 @@ We're grateful to everyone who has contributed to ElseID!
 
 ## How to Contribute
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
+See [CONTRIBUTING.md](./.github/CONTRIBUTING.md) for guidelines.
 
 ## Contributor Recognition
 

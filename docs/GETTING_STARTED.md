@@ -379,7 +379,7 @@ The Butler will show you summaries of past drifters and their journeys.
 - [Report Bug](https://github.com/9Churze/ElseID/issues/new?labels=bug)
 
 **Want to contribute?** See:
-- [Contributing Guide](../CONTRIBUTING.md)
+- [Contributing Guide](../.github/CONTRIBUTING.md)
 
 ---
 
